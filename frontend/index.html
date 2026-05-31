@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simplifica Finanças — Sistema Distribuído</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --brand:     #4f46e5;
+  --brand-lt:  #818cf8;
+  --brand-dk:  #312e81;
+  --success:   #10b981;
+  --danger:    #ef4444;
+  --warn:      #f59e0b;
+  --bg:        #0f0f1a;
+  --surface:   #1a1a2e;
+  --card:      #16213e;
+  --border:    #2d2d4e;
+  --text:      #e2e8f0;
+  --text-muted:#94a3b8;
+  --radius:    14px;
+  --shadow:    0 4px 32px rgba(79,70,229,.18);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+h1,h2,h3 { font-family: 'Syne', sans-serif; }
+
+/* ── UTILITÁRIOS ── */
+.hidden  { display: none !important; }
+.flex    { display: flex; }
+.gap-1   { gap: .5rem; }
+.gap-2   { gap: 1rem; }
+.grid-2  { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }
+.grid-3  { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+.mt-1    { margin-top: .5rem; }
+.mt-2    { margin-top: 1rem; }
+.mt-3    { margin-top: 1.5rem; }
+.text-sm { font-size: .875rem; }
+.text-muted { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.text-danger  { color: var(--danger); }
+.bold    { font-weight: 700; }
+.center  { text-align: center; }
+
+/* ── AUTH SCREEN ── */
+#auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 60% 30%, #312e81 0%, #0f0f1a 70%);
+  padding: 1.5rem;
+}
+.auth-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow);
+}
+.auth-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #818cf8, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  margin-bottom: .25rem;
+}
+.auth-tagline {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: .9rem;
+  margin-bottom: 2rem;
+}
+.auth-tabs {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.auth-tab {
+  flex: 1;
+  padding: .65rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.auth-tab.active {
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: .85rem; color: var(--text-muted); margin-bottom: .35rem; }
+input, select, textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
+  outline: none;
+  transition: border-color .2s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--brand-lt); }
+select option { background: var(--card); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+}
+.btn-primary   { background: var(--brand);   color: #fff; }
+.btn-primary:hover   { background: #4338ca; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,.4); }
+.btn-success   { background: var(--success); color: #fff; }
+.btn-success:hover   { background: #059669; }
+.btn-danger    { background: var(--danger);  color: #fff; }
+.btn-danger:hover    { background: #dc2626; }
+.btn-outline   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover   { border-color: var(--brand-lt); color: var(--brand-lt); }
+.btn-sm        { padding: .45rem 1rem; font-size: .85rem; }
+.btn-full      { width: 100%; }
+
+/* ── APP LAYOUT ── */
+#app-screen { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform .3s;
+}
+.sidebar-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #818cf8, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding: .5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: .95rem;
+  transition: all .2s;
+  margin-bottom: .25rem;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover  { background: rgba(79,70,229,.15); color: var(--text); }
+.nav-item.active { background: rgba(79,70,229,.25); color: var(--brand-lt); font-weight: 600; }
+.nav-icon        { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+.sidebar-bottom  { margin-top: auto; }
+
+.main-content {
+  margin-left: 240px;
+  flex: 1;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.topbar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.modo-badge {
+  padding: .3rem .8rem;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  background: rgba(129,140,248,.2);
+  color: var(--brand-lt);
+  border: 1px solid rgba(129,140,248,.3);
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+.card-sm { padding: 1rem; }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.stat-card.receitas::before { background: var(--success); }
+.stat-card.despesas::before { background: var(--danger); }
+.stat-card.saldo::before    { background: var(--brand); }
+.stat-label { font-size: .8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-top: .25rem; }
+.stat-icon  { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; opacity: .3; }
+
+/* ── TRANSACTIONS TABLE ── */
+.trans-list { display: flex; flex-direction: column; gap: .5rem; }
+.trans-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color .2s;
+}
+.trans-item:hover { border-color: var(--brand); }
+.trans-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.trans-info { flex: 1; }
+.trans-desc { font-size: .95rem; font-weight: 500; }
+.trans-meta { font-size: .8rem; color: var(--text-muted); }
+.trans-val  { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+.trans-del  { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: .25rem; border-radius: 6px; transition: all .2s; }
+.trans-del:hover { color: var(--danger); background: rgba(239,68,68,.1); }
+
+/* ── METAS ── */
+.meta-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  position: relative;
+}
+.meta-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.meta-title  { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; }
+.meta-badge  { font-size: .75rem; padding: .2rem .6rem; border-radius: 20px; }
+.meta-badge.ativa     { background: rgba(16,185,129,.15); color: var(--success); }
+.meta-badge.concluida { background: rgba(79,70,229,.15);  color: var(--brand-lt); }
+.meta-badge.cancelada { background: rgba(239,68,68,.15);  color: var(--danger); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: .5rem 0; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+.meta-valores { display: flex; justify-content: space-between; font-size: .85rem; color: var(--text-muted); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-title  { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+.modal-close  { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; padding: .25rem; border-radius: 6px; }
+.modal-close:hover { color: var(--text); background: var(--border); }
+
+/* ── TOAST ── */
+#toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+.toast {
+  padding: .9rem 1.2rem;
+  border-radius: 12px;
+  font-size: .9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  animation: slideIn .3s ease;
+  max-width: 320px;
+  border-left: 4px solid;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast.success { background: #052e16; color: #4ade80; border-color: var(--success); }
+.toast.error   { background: #450a0a; color: #fca5a5; border-color: var(--danger); }
+.toast.info    { background: #1e1b4b; color: #a5b4fc; border-color: var(--brand); }
+
+/* ── CHART SIMPLES ── */
+.bar-chart { display: flex; align-items: flex-end; gap: .5rem; height: 120px; }
+.bar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.bar       { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height .5s; }
+.bar-label { font-size: .65rem; color: var(--text-muted); text-align: center; }
+
+/* ── SIMPLES MODE ── */
+body.modo-simples .stat-value { font-size: 2.4rem; }
+body.modo-simples .trans-desc { font-size: 1.05rem; }
+body.modo-simples .btn        { font-size: 1.05rem; padding: .9rem 1.8rem; }
+body.modo-simples .sidebar    { width: 260px; }
+body.modo-simples .main-content { margin-left: 260px; }
+body.modo-simples .nav-item   { font-size: 1.05rem; padding: .85rem 1rem; }
+
+/* ── LOADER ── */
+.loader {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+.empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 80%; }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 1rem; }
+  body.modo-simples .main-content { margin-left: 0; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .topbar-title { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOAST ══════════ -->
+<div id="toast-container"></div>
+
+<!-- ══════════ AUTH ══════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">💰 Simplifica</div>
+    <div class="auth-tagline">Sistema Distribuído de Gestão Financeira</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="trocarAba('login')">Entrar</button>
+      <button class="auth-tab"        onclick="trocarAba('registro')">Criar conta</button>
+    </div>
+
+    <!-- Login -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input id="login-email" type="email" placeholder="seu@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input id="login-senha" type="password" placeholder="••••••"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="fazerLogin()">Entrar →</button>
+    </div>
+
+    <!-- Registro -->
+    <div id="form-registro" class="hidden">
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input id="reg-nome" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input id="reg-email" type="email" placeholder="seu@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Senha (mín. 6 caracteres)</label>
+        <input id="reg-senha" type="password" placeholder="••••••"/>
+      </div>
+      <div class="form-group">
+        <label>Modo de interface</label>
+        <select id="reg-modo">
+          <option value="simples">🌿 Simples — interface limpa e acessível</option>
+          <option value="avancado">📊 Avançado — com gráficos e relatórios</option>
+        </select>
+      </div>
+      <button class="btn btn-success btn-full" onclick="fazerRegistro()">Criar conta →</button>
+    </div>
+
+    <p class="text-sm text-muted center mt-2">Sistema Distribuído · 5 Microsserviços · Docker · MongoDB · Redis</p>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app-screen" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">💰 Simplifica</div>
+
+    <button class="nav-item active" data-page="dashboard" onclick="navegarPara('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" data-page="transacoes" onclick="navegarPara('transacoes')">
+      <span class="nav-icon">💸</span> Transações
+    </button>
+    <button class="nav-item" data-page="metas" onclick="navegarPara('metas')">
+      <span class="nav-icon">🎯</span> Metas
+    </button>
+    <button class="nav-item" data-page="relatorios" onclick="navegarPara('relatorios')">
+      <span class="nav-icon">📈</span> Relatórios
+    </button>
+    <button class="nav-item" data-page="servicos" onclick="navegarPara('servicos')">
+      <span class="nav-icon">🔧</span> Microsserviços
+    </button>
+
+    <div class="sidebar-bottom">
+      <button class="nav-item" onclick="fazerLogout()">
+        <span class="nav-icon">🚪</span> Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="topbar">
+      <h1 class="topbar-title" id="page-title">Dashboard</h1>
+      <div class="topbar-right">
+        <span class="modo-badge" id="modo-badge">Simples</span>
+        <span class="text-muted text-sm" id="user-nome">…</span>
+      </div>
+    </div>
+
+    <!-- ─── DASHBOARD ─── -->
+    <div id="page-dashboard">
+      <div class="grid-3" id="stats-cards">
+        <div class="stat-card receitas">
+          <span class="stat-icon">📥</span>
+          <div class="stat-label">Receitas</div>
+          <div class="stat-value text-success" id="stat-receitas">R$ —</div>
+        </div>
+        <div class="stat-card despesas">
+          <span class="stat-icon">📤</span>
+          <div class="stat-label">Despesas</div>
+          <div class="stat-value text-danger" id="stat-despesas">R$ —</div>
+        </div>
+        <div class="stat-card saldo">
+          <span class="stat-icon">💰</span>
+          <div class="stat-label">Saldo</div>
+          <div class="stat-value" id="stat-saldo">R$ —</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mt-3">
+        <!-- Últimas transações -->
+        <div class="card">
+          <div class="flex gap-1" style="justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h3>Últimas Transações</h3>
+            <button class="btn btn-outline btn-sm" onclick="navegarPara('transacoes')">Ver todas</button>
+          </div>
+          <div class="trans-list" id="dash-trans-list">
+            <div class="center text-muted text-sm">Carregando…</div>
+          </div>
+        </div>
+
+        <!-- Gráfico por categoria -->
+        <div class="card" id="card-grafico">
+          <h3 style="margin-bottom:1rem">Despesas por Categoria</h3>
+          <div id="chart-categorias" class="bar-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TRANSAÇÕES ─── -->
+    <div id="page-transacoes" class="hidden">
+      <div class="flex gap-2" style="margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-success" onclick="abrirModalTransacao('receita')">+ Receita</button>
+        <button class="btn btn-danger"  onclick="abrirModalTransacao('despesa')">+ Despesa</button>
+        <select id="filtro-tipo" class="btn btn-outline" style="padding:.65rem 1rem" onchange="carregarTransacoes()">
+          <option value="">Todos os tipos</option>
+          <option value="receita">Receitas</option>
+          <option value="despesa">Despesas</option>
+        </select>
+        <select id="filtro-cat" class="btn btn-outline" style="padding:.65rem 1rem" onchange="carregarTransacoes()">
+          <option value="">Todas as categorias</option>
+          <option>Alimentação</option><option>Moradia</option><option>Transporte</option>
+          <option>Saúde</option><option>Lazer</option><option>Educação</option>
+          <option>Salário</option><option>Vendas</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="trans-list" id="trans-list">
+        <div class="center text-muted">Carregando…</div>
+      </div>
+      <div class="flex gap-1 mt-2" style="justify-content:center" id="paginacao"></div>
+    </div>
+
+    <!-- ─── METAS ─── -->
+    <div id="page-metas" class="hidden">
+      <div class="flex gap-2" style="margin-bottom:1.5rem">
+        <button class="btn btn-primary" onclick="abrirModalMeta()">+ Nova Meta</button>
+      </div>
+      <div class="grid-2" id="metas-list">
+        <div class="center text-muted">Carregando…</div>
+      </div>
+    </div>
+
+    <!-- ─── RELATÓRIOS ─── -->
+    <div id="page-relatorios" class="hidden">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="flex gap-2" style="align-items:center;flex-wrap:wrap">
+          <div>
+            <label class="text-sm text-muted">Mês</label>
+            <select id="rel-mes">
+              <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+              <option value="3">Março</option><option value="4">Abril</option>
+              <option value="5">Maio</option><option value="6">Junho</option>
+              <option value="7">Julho</option><option value="8">Agosto</option>
+              <option value="9">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-muted">Ano</label>
+            <input id="rel-ano" type="number" value="2026" min="2020" max="2030" style="width:100px"/>
+          </div>
+          <div style="margin-top:1.25rem">
+            <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">Consultar</button>
+          </div>
+          <div style="margin-top:1.25rem;margin-left:auto;display:flex;gap:.5rem">
+            <button class="btn btn-outline btn-sm" onclick="exportarExcel()">📊 Excel</button>
+            <button class="btn btn-outline btn-sm" onclick="exportarPDF()">📄 PDF</button>
+          </div>
+        </div>
+      </div>
+      <div id="relatorio-resultado"></div>
+    </div>
+
+    <!-- ─── MICROSSERVIÇOS ─── -->
+    <div id="page-servicos" class="hidden">
+      <p class="text-muted" style="margin-bottom:1.5rem">Status em tempo real de todos os microsserviços da arquitetura distribuída.</p>
+      <div class="grid-3" id="servicos-list">
+        <div class="center text-muted">Verificando…</div>
+      </div>
+      <div class="card mt-3">
+        <h3 style="margin-bottom:1rem">🏗️ Arquitetura do Sistema</h3>
+        <pre style="color:var(--text-muted);font-size:.8rem;line-height:1.8;overflow:auto">
+  ┌─────────────────────────────────────────────────────┐
+  │                  CLIENTE (Browser)                   │
+  └──────────────────────┬──────────────────────────────┘
+                         │ HTTP / REST
+  ┌──────────────────────▼──────────────────────────────┐
+  │              API GATEWAY  :8000                      │
+  │  Rate Limiting · JWT Validation · Request Routing    │
+  └──┬──────┬──────┬──────┬──────────────────────────┘
+     │      │      │      │
+  ┌──▼─┐ ┌──▼─┐ ┌──▼─┐ ┌──▼──────┐ ┌────────────┐
+  │AUTH│ │TRAN│ │GOAL│ │REPORTS │ │NOTIF       │
+  │:5001│ │:5002│ │:5003│ │:5004   │ │:5005       │
+  └──┬─┘ └──┬─┘ └──┬─┘ └──┬─────┘ └────┬───────┘
+     │      │      │      │             │
+  ┌──▼──┐ ┌─▼──────▼──────▼───┐ ┌──────▼──────┐
+  │PG   │ │    MongoDB         │ │  RabbitMQ   │
+  │:5432│ │    :27017          │ │  :5672      │
+  └─────┘ └───────────────────┘ └─────────────┘
+          ┌───────────────────────────────────┐
+          │            Redis :6379             │
+          │  Cache · Sessions · Notifications  │
+          └───────────────────────────────────┘</pre>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════ MODAIS ══════════ -->
+<!-- Modal Transação -->
+<div id="modal-transacao" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-trans-titulo">Nova Transação</h2>
+      <button class="modal-close" onclick="fecharModal('modal-transacao')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Descrição</label>
+      <input id="t-desc" type="text" placeholder="Ex: Supermercado, Salário…"/>
+    </div>
+    <div class="form-group">
+      <label>Valor (R$)</label>
+      <input id="t-valor" type="number" step="0.01" min="0.01" placeholder="0,00"/>
+    </div>
+    <div class="form-group">
+      <label>Categoria</label>
+      <select id="t-cat">
+        <option>Alimentação</option><option>Moradia</option><option>Transporte</option>
+        <option>Saúde</option><option>Lazer</option><option>Educação</option>
+        <option>Salário</option><option>Vendas</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Data</label>
+      <input id="t-data" type="date"/>
+    </div>
+    <input type="hidden" id="t-tipo"/>
+    <div class="flex gap-2 mt-2">
+      <button class="btn btn-outline" onclick="fecharModal('modal-transacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTransacao()" style="flex:1">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Meta -->
+<div id="modal-meta" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Nova Meta Financeira</h2>
+      <button class="modal-close" onclick="fecharModal('modal-meta')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Título da Meta</label>
+      <input id="m-titulo" type="text" placeholder="Ex: Fundo de emergência, Viagem…"/>
+    </div>
+    <div class="form-group">
+      <label>Valor Alvo (R$)</label>
+      <input id="m-alvo" type="number" step="0.01" min="0.01" placeholder="0,00"/>
+    </div>
+    <div class="form-group">
+      <label>Categoria</label>
+      <select id="m-cat">
+        <option>Poupança</option><option>Viagem</option><option>Educação</option>
+        <option>Saúde</option><option>Todos</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Data Limite (opcional)</label>
+      <input id="m-limite" type="date"/>
+    </div>
+    <div class="flex gap-2 mt-2">
+      <button class="btn btn-outline" onclick="fecharModal('modal-meta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMeta()" style="flex:1">Criar Meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Depositar -->
+<div id="modal-depositar" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Depositar na Meta</h2>
+      <button class="modal-close" onclick="fecharModal('modal-depositar')">✕</button>
+    </div>
+    <p class="text-muted text-sm" id="dep-meta-titulo" style="margin-bottom:1rem"></p>
+    <div class="form-group">
+      <label>Valor (R$)</label>
+      <input id="dep-valor" type="number" step="0.01" min="0.01" placeholder="0,00"/>
+    </div>
+    <input type="hidden" id="dep-meta-id"/>
+    <div class="flex gap-2 mt-2">
+      <button class="btn btn-outline" onclick="fecharModal('modal-depositar')">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarDeposito()" style="flex:1">Depositar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════
+const API = 'http://localhost:8000/api';
+let token      = localStorage.getItem('sf_token') || '';
+let usuarioId  = localStorage.getItem('sf_uid')   || '';
+let usuarioNome = localStorage.getItem('sf_nome') || '';
+let modoInterface = localStorage.getItem('sf_modo') || 'simples';
+let paginaAtual = 1;
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+function toast(msg, tipo = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ══════════════════════════════════════════════════════
+//  API HELPER
+// ══════════════════════════════════════════════════════
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  if (res.status === 204) return null;
+  // Detecta binary (excel/pdf)
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('octet') || ct.includes('spreadsheet') || ct.includes('pdf')) {
+    return res.blob();
+  }
+  return res.json().catch(() => ({}));
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════
+function trocarAba(aba) {
+  document.getElementById('form-login').classList.toggle('hidden', aba !== 'login');
+  document.getElementById('form-registro').classList.toggle('hidden', aba !== 'registro');
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (aba === 'login')));
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha  = document.getElementById('login-senha').value;
+  if (!email || !senha) { toast('Preencha todos os campos', 'error'); return; }
+  const r = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
+  if (r.token) {
+    token = r.token; usuarioId = r.usuario_id; usuarioNome = r.nome; modoInterface = r.modo;
+    localStorage.setItem('sf_token', token);
+    localStorage.setItem('sf_uid',   usuarioId);
+    localStorage.setItem('sf_nome',  usuarioNome);
+    localStorage.setItem('sf_modo',  modoInterface);
+    entrarNoApp();
+  } else {
+    toast(r.erro || 'Erro no login', 'error');
+  }
+}
+
+async function fazerRegistro() {
+  const nome  = document.getElementById('reg-nome').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const senha  = document.getElementById('reg-senha').value;
+  const modo   = document.getElementById('reg-modo').value;
+  if (!nome || !email || !senha) { toast('Preencha todos os campos', 'error'); return; }
+  const r = await api('/auth/registro', { method: 'POST', body: JSON.stringify({ nome, email, senha, modo_interface: modo }) });
+  if (r.token) {
+    token = r.token; usuarioId = r.usuario_id; usuarioNome = nome; modoInterface = modo;
+    localStorage.setItem('sf_token', token);
+    localStorage.setItem('sf_uid',   usuarioId);
+    localStorage.setItem('sf_nome',  usuarioNome);
+    localStorage.setItem('sf_modo',  modoInterface);
+    toast('Conta criada com sucesso!', 'success');
+    entrarNoApp();
+  } else {
+    toast(r.erro || 'Erro no registro', 'error');
+  }
+}
+
+function entrarNoApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('user-nome').textContent = usuarioNome;
+  document.getElementById('modo-badge').textContent = modoInterface === 'simples' ? '🌿 Simples' : '📊 Avançado';
+  if (modoInterface === 'simples') document.body.classList.add('modo-simples');
+  navegarPara('dashboard');
+}
+
+async function fazerLogout() {
+  await api('/auth/logout', { method: 'POST' }).catch(() => {});
+  token = usuarioId = usuarioNome = '';
+  localStorage.clear();
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.body.classList.remove('modo-simples');
+  toast('Sessão encerrada', 'info');
+}
+
+// ══════════════════════════════════════════════════════
+//  NAVEGAÇÃO
+// ══════════════════════════════════════════════════════
+const PAGINAS = ['dashboard','transacoes','metas','relatorios','servicos'];
+function navegarPara(pagina) {
+  PAGINAS.forEach(p => {
+    document.getElementById(`page-${p}`).classList.toggle('hidden', p !== pagina);
+  });
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === pagina);
+  });
+  const titulos = { dashboard:'Dashboard', transacoes:'Transações', metas:'Metas', relatorios:'Relatórios', servicos:'Microsserviços' };
+  document.getElementById('page-title').textContent = titulos[pagina] || pagina;
+
+  if (pagina === 'dashboard')    carregarDashboard();
+  if (pagina === 'transacoes')   carregarTransacoes();
+  if (pagina === 'metas')        carregarMetas();
+  if (pagina === 'relatorios')   iniciarRelatorios();
+  if (pagina === 'servicos')     carregarServicos();
+}
+
+// ══════════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════════
+async function carregarDashboard() {
+  // Saldo
+  const saldo = await api('/transacoes/saldo');
+  if (saldo?.saldo) {
+    const s = saldo.saldo;
+    document.getElementById('stat-receitas').textContent = fmt(s.receitas);
+    document.getElementById('stat-despesas').textContent = fmt(s.despesas);
+    const elSaldo = document.getElementById('stat-saldo');
+    elSaldo.textContent = fmt(s.saldo);
+    elSaldo.className   = `stat-value ${s.saldo >= 0 ? 'text-success' : 'text-danger'}`;
+  }
+  // Últimas 5 transações
+  const dados = await api('/transacoes?limite=5');
+  const lista = document.getElementById('dash-trans-list');
+  if (dados?.transacoes?.length) {
+    lista.innerHTML = dados.transacoes.map(transacaoHTML).join('');
+  } else {
+    lista.innerHTML = '<div class="empty-state"><div class="icon">🏦</div><p>Nenhuma transação ainda.<br>Comece adicionando uma receita!</p></div>';
+  }
+  // Gráfico de categorias (apenas modo avançado no card de gráfico)
+  const catData = await api('/transacoes/categorias/resumo?tipo=despesa');
+  renderizarGrafico(catData?.categorias || []);
+}
+
+function transacaoHTML(t, comBotaoExcluir = false) {
+  const cor   = t.tipo === 'receita' ? 'var(--success)' : 'var(--danger)';
+  const sinal = t.tipo === 'receita' ? '+' : '-';
+  const excl  = comBotaoExcluir ? `<button class="trans-del" onclick="excluirTransacao('${t._id}')" title="Excluir">🗑</button>` : '';
+  return `<div class="trans-item">
+    <div class="trans-dot" style="background:${cor}"></div>
+    <div class="trans-info">
+      <div class="trans-desc">${t.descricao}</div>
+      <div class="trans-meta">${t.categoria} · ${formatarData(t.data)}</div>
+    </div>
+    <div class="trans-val" style="color:${cor}">${sinal} ${fmt(t.valor)}</div>
+    ${excl}
+  </div>`;
+}
+
+function renderizarGrafico(categorias) {
+  const el = document.getElementById('chart-categorias');
+  if (!categorias.length) { el.innerHTML = '<div class="center text-muted text-sm" style="width:100%">Sem despesas no período</div>'; return; }
+  const max = Math.max(...categorias.map(c => c.total));
+  const cores = ['#ef4444','#f59e0b','#8b5cf6','#06b6d4','#10b981','#f43f5e','#6366f1'];
+  el.innerHTML = categorias.slice(0, 7).map((c, i) => {
+    const pct = Math.round(c.total / max * 100);
+    return `<div class="bar-col">
+      <div class="bar" style="height:${pct}%;background:${cores[i % cores.length]}"></div>
+      <div class="bar-label">${c.categoria.slice(0,7)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  TRANSAÇÕES
+// ══════════════════════════════════════════════════════
+async function carregarTransacoes() {
+  const tipo = document.getElementById('filtro-tipo')?.value || '';
+  const cat  = document.getElementById('filtro-cat')?.value  || '';
+  let url    = `/transacoes?pagina=${paginaAtual}&limite=15`;
+  if (tipo) url += `&tipo=${tipo}`;
+  if (cat)  url += `&categoria=${cat}`;
+  const dados = await api(url);
+  const lista  = document.getElementById('trans-list');
+  if (!dados?.transacoes?.length) {
+    lista.innerHTML = '<div class="empty-state"><div class="icon">💸</div><p>Nenhuma transação encontrada.</p></div>';
+    return;
+  }
+  lista.innerHTML = dados.transacoes.map(t => transacaoHTML(t, true)).join('');
+  renderizarPaginacao(dados.pagina, dados.paginas);
+}
+
+function renderizarPaginacao(atual, total) {
+  const el = document.getElementById('paginacao');
+  if (total <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  if (atual > 1) html += `<button class="btn btn-outline btn-sm" onclick="mudarPagina(${atual-1})">← Anterior</button>`;
+  html += `<span class="text-sm text-muted" style="padding:.45rem .75rem">${atual} / ${total}</span>`;
+  if (atual < total) html += `<button class="btn btn-outline btn-sm" onclick="mudarPagina(${atual+1})">Próxima →</button>`;
+  el.innerHTML = html;
+}
+
+function mudarPagina(p) { paginaAtual = p; carregarTransacoes(); }
+
+function abrirModalTransacao(tipo) {
+  document.getElementById('t-tipo').value = tipo;
+  document.getElementById('modal-trans-titulo').textContent = tipo === 'receita' ? '+ Receita' : '+ Despesa';
+  document.getElementById('t-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('t-desc').value  = '';
+  document.getElementById('t-valor').value = '';
+  document.getElementById('modal-transacao').classList.remove('hidden');
+}
+
+async function salvarTransacao() {
+  const tipo     = document.getElementById('t-tipo').value;
+  const descricao = document.getElementById('t-desc').value.trim();
+  const valor    = parseFloat(document.getElementById('t-valor').value);
+  const categoria = document.getElementById('t-cat').value;
+  const data     = document.getElementById('t-data').value;
+  if (!descricao || !valor || valor <= 0) { toast('Preencha descrição e valor', 'error'); return; }
+  const r = await api('/transacoes', { method: 'POST', body: JSON.stringify({ tipo, descricao, valor, categoria, data }) });
+  if (r?.id) {
+    toast('Transação salva!', 'success');
+    fecharModal('modal-transacao');
+    carregarTransacoes();
+    carregarDashboard();
+  } else {
+    toast(r?.erro || 'Erro ao salvar', 'error');
+  }
+}
+
+async function excluirTransacao(id) {
+  if (!confirm('Excluir esta transação?')) return;
+  const r = await api(`/transacoes/${id}`, { method: 'DELETE' });
+  if (r?.mensagem) {
+    toast('Transação excluída', 'info');
+    carregarTransacoes();
+    carregarDashboard();
+  } else {
+    toast(r?.erro || 'Erro ao excluir', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  METAS
+// ══════════════════════════════════════════════════════
+async function carregarMetas() {
+  const dados = await api('/metas');
+  const el    = document.getElementById('metas-list');
+  if (!dados?.metas?.length) {
+    el.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎯</div><p>Nenhuma meta criada ainda.</p></div>';
+    return;
+  }
+  el.innerHTML = dados.metas.map(m => {
+    const pct  = m.progresso_pct || 0;
+    const cor  = m.cor || '#6366f1';
+    const badges = { ativa: 'ativa', concluida: 'concluida', cancelada: 'cancelada' };
+    return `<div class="meta-card">
+      <div class="meta-header">
+        <div class="meta-title">${m.titulo}</div>
+        <span class="meta-badge ${badges[m.status]}">${m.status}</span>
+      </div>
+      ${m.descricao ? `<p class="text-sm text-muted" style="margin-bottom:.75rem">${m.descricao}</p>` : ''}
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:${cor}"></div>
+      </div>
+      <div class="meta-valores">
+        <span>${pct}% concluído</span>
+        <span>${fmt(m.valor_atual)} / ${fmt(m.valor_alvo)}</span>
+      </div>
+      ${m.status === 'ativa' ? `<div class="flex gap-1 mt-2">
+        <button class="btn btn-success btn-sm" onclick="abrirDeposito('${m._id}','${m.titulo}')">+ Depositar</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelarMeta('${m._id}')">Cancelar</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function abrirModalMeta() {
+  document.getElementById('m-titulo').value = '';
+  document.getElementById('m-alvo').value   = '';
+  document.getElementById('m-limite').value  = '';
+  document.getElementById('modal-meta').classList.remove('hidden');
+}
+
+async function salvarMeta() {
+  const titulo     = document.getElementById('m-titulo').value.trim();
+  const valor_alvo = parseFloat(document.getElementById('m-alvo').value);
+  const categoria  = document.getElementById('m-cat').value;
+  const data_limite = document.getElementById('m-limite').value || undefined;
+  const data_inicio = new Date().toISOString().split('T')[0];
+  if (!titulo || !valor_alvo || valor_alvo <= 0) { toast('Preencha título e valor', 'error'); return; }
+  const r = await api('/metas', { method: 'POST', body: JSON.stringify({ titulo, valor_alvo, categoria, data_inicio, data_limite }) });
+  if (r?.id) {
+    toast('Meta criada!', 'success');
+    fecharModal('modal-meta');
+    carregarMetas();
+  } else {
+    toast(r?.erro || 'Erro ao criar meta', 'error');
+  }
+}
+
+function abrirDeposito(id, titulo) {
+  document.getElementById('dep-meta-id').value        = id;
+  document.getElementById('dep-meta-titulo').textContent = `Meta: ${titulo}`;
+  document.getElementById('dep-valor').value           = '';
+  document.getElementById('modal-depositar').classList.remove('hidden');
+}
+
+async function salvarDeposito() {
+  const id    = document.getElementById('dep-meta-id').value;
+  const valor = parseFloat(document.getElementById('dep-valor').value);
+  if (!valor || valor <= 0) { toast('Informe um valor positivo', 'error'); return; }
+  const r = await api(`/metas/${id}/depositar`, { method: 'POST', body: JSON.stringify({ valor }) });
+  if (r?.progresso !== undefined) {
+    toast(`Depositado! ${r.progresso}% da meta atingida.`, 'success');
+    fecharModal('modal-depositar');
+    carregarMetas();
+  } else {
+    toast(r?.erro || 'Erro ao depositar', 'error');
+  }
+}
+
+async function cancelarMeta(id) {
+  if (!confirm('Cancelar esta meta?')) return;
+  const r = await api(`/metas/${id}/cancelar`, { method: 'POST' });
+  if (r?.mensagem) { toast('Meta cancelada', 'info'); carregarMetas(); }
+  else toast(r?.erro || 'Erro', 'error');
+}
+
+// ══════════════════════════════════════════════════════
+//  RELATÓRIOS
+// ══════════════════════════════════════════════════════
+function iniciarRelatorios() {
+  const hoje = new Date();
+  document.getElementById('rel-mes').value = hoje.getMonth() + 1;
+  document.getElementById('rel-ano').value  = hoje.getFullYear();
+  carregarRelatorio();
+}
+
+async function carregarRelatorio() {
+  const mes = document.getElementById('rel-mes').value;
+  const ano = document.getElementById('rel-ano').value;
+  const dados = await api(`/relatorios/resumo?mes=${mes}&ano=${ano}`);
+  const el    = document.getElementById('relatorio-resultado');
+  if (!dados?.resumo) { el.innerHTML = '<p class="text-muted">Sem dados para o período.</p>'; return; }
+  const r = dados.resumo;
+  el.innerHTML = `
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="card"><div class="text-muted text-sm">Receitas</div><div class="bold" style="font-size:1.5rem;color:var(--success)">${fmt(r.receitas)}</div></div>
+      <div class="card"><div class="text-muted text-sm">Despesas</div><div class="bold" style="font-size:1.5rem;color:var(--danger)">${fmt(r.despesas)}</div></div>
+      <div class="card"><div class="text-muted text-sm">Saldo</div><div class="bold" style="font-size:1.5rem;color:${r.saldo>=0?'var(--success)':'var(--danger)'}">${fmt(r.saldo)}</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:1rem">Despesas por Categoria</h3>
+      ${r.categorias.length ? r.categorias.map(c => `
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;align-items:center">
+          <span class="text-sm">${c.categoria}</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;margin:0 1rem;overflow:hidden">
+            <div style="height:100%;width:${Math.round(c.total/r.despesas*100)}%;background:var(--danger);border-radius:3px"></div>
+          </div>
+          <span class="text-sm bold">${fmt(c.total)}</span>
+        </div>`).join('') : '<p class="text-muted text-sm">Sem despesas no período.</p>'}
+    </div>`;
+}
+
+async function exportarExcel() {
+  const mes = document.getElementById('rel-mes').value;
+  const ano = document.getElementById('rel-ano').value;
+  const blob = await api(`/relatorios/exportar/excel?mes=${mes}&ano=${ano}`);
+  if (blob instanceof Blob) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url; a.download = `simplifica_${ano}_${mes}.xlsx`; a.click();
+    toast('Excel baixado!', 'success');
+  } else toast('Erro ao exportar Excel', 'error');
+}
+
+async function exportarPDF() {
+  const mes = document.getElementById('rel-mes').value;
+  const ano = document.getElementById('rel-ano').value;
+  const blob = await api(`/relatorios/exportar/pdf?mes=${mes}&ano=${ano}`);
+  if (blob instanceof Blob) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url; a.download = `relatorio_${ano}_${mes}.pdf`; a.click();
+    toast('PDF baixado!', 'success');
+  } else toast('Erro ao exportar PDF', 'error');
+}
+
+// ══════════════════════════════════════════════════════
+//  MICROSSERVIÇOS (status)
+// ══════════════════════════════════════════════════════
+async function carregarServicos() {
+  const el   = document.getElementById('servicos-list');
+  el.innerHTML = '<div class="center text-muted" style="grid-column:1/-1">Verificando serviços…</div>';
+  const dados = await api('/health'.replace('/api',''), { headers: {} }).catch(() => null);
+  // Chama direto o gateway /health
+  let statuses = {};
+  try {
+    const r = await fetch('http://localhost:8000/health');
+    const d = await r.json();
+    statuses = d.servicos || {};
+  } catch(e) {
+    statuses = { 'api-gateway': 'offline' };
+  }
+  const info = {
+    auth:          { nome: 'Auth Service',         icon: '🔐', porta: '5001', desc: 'JWT, Login, Registro, Perfil' },
+    transactions:  { nome: 'Transaction Service',  icon: '💸', porta: '5002', desc: 'CRUD Transações · MongoDB · Redis' },
+    goals:         { nome: 'Goal Service',         icon: '🎯', porta: '5003', desc: 'Metas Financeiras · RabbitMQ Consumer' },
+    reports:       { nome: 'Report Service',       icon: '📊', porta: '5004', desc: 'Relatórios · Excel · PDF' },
+    notifications: { nome: 'Notification Service', icon: '🔔', porta: '5005', desc: 'Alertas via Redis · RabbitMQ' },
+  };
+  el.innerHTML = Object.entries(info).map(([key, s]) => {
+    const status = statuses[key] || 'desconhecido';
+    const cor    = status === 'ok' ? 'var(--success)' : status === 'degradado' ? 'var(--warn)' : 'var(--danger)';
+    return `<div class="card">
+      <div style="font-size:2rem;margin-bottom:.5rem">${s.icon}</div>
+      <div class="bold" style="margin-bottom:.25rem">${s.nome}</div>
+      <div class="text-sm text-muted" style="margin-bottom:.75rem">${s.desc}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <code style="font-size:.8rem;color:var(--text-muted)">:${s.porta}</code>
+        <span style="font-size:.8rem;font-weight:700;color:${cor};text-transform:uppercase">● ${status}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
+function fmt(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); }
+function formatarData(d) {
+  if (!d) return '';
+  const dt = new Date(d + (d.length === 10 ? 'T00:00:00' : ''));
+  return dt.toLocaleDateString('pt-BR');
+}
+
+// Fecha modal ao clicar no overlay
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+});
+
+// ══════════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  if (token) {
+    entrarNoApp();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Financeiro — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        height: 100%;
+        transition: box-shadow .2s;
+    }
+    .kpi-card:hover { box-shadow: var(--shadow-md); }
+    .kpi-icon-wrap {
+        width: 48px; height: 48px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.125rem;
+    }
+    .kpi-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--brand-500); margin-bottom: .25rem; }
+    .kpi-value { font-size: 1.875rem; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .kpi-sub   { font-size: .8125rem; color: var(--brand-500); margin-top: .35rem; display:flex; align-items:center; gap:.3rem; }
+    .kpi-sub .up   { color: var(--success); }
+    .kpi-sub .down { color: var(--danger); }
+
+    .chart-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-lg);
+        height: 100%;
+    }
+
+    .chart-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--brand-50);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chart-card-title {
+        font-size: .9375rem;
+        font-weight: 700;
+        color: var(--brand-800);
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .chart-card-body { padding: 1.5rem; }
+
+    .period-tabs {
+        display: flex;
+        background: var(--brand-100);
+        border-radius: var(--radius-full);
+        padding: 3px;
+        gap: 2px;
+    }
+    .period-tab {
+        padding: .3rem .75rem;
+        border-radius: var(--radius-full);
+        font-size: .8rem;
+        font-weight: 600;
+        color: var(--brand-500);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        transition: all .2s;
+        white-space: nowrap;
+    }
+    .period-tab.active { background: white; color: var(--brand-800); box-shadow: var(--shadow-sm); }
+
+    .legend-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .quick-actions-list { display: flex; flex-direction: column; gap: .625rem; }
+    .quick-action-btn {
+        display: flex; align-items: center; gap: .875rem;
+        padding: .875rem 1rem;
+        border-radius: var(--radius-md);
+        border: 1.5px solid var(--brand-100);
+        background: white;
+        color: var(--brand-700);
+        font-weight: 600; font-size: .9rem;
+        text-decoration: none;
+        transition: all .2s;
+    }
+    .quick-action-btn:hover { border-color: var(--accent); color: var(--accent-dark); background: var(--accent-glow); }
+    .qa-icon {
+        width: 36px; height: 36px;
+        border-radius: var(--radius-sm);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .875rem;
+        flex-shrink: 0;
+    }
+
+    .insight-card {
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .insight-icon {
+        width: 40px; height: 40px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .9rem;
+        flex-shrink: 0;
+    }
+    .insight-title { font-size: .875rem; font-weight: 700; margin-bottom: .25rem; }
+    .insight-body  { font-size: .8125rem; color: var(--brand-500); line-height: 1.5; }
+
+    .tx-table th { font-size: .72rem; }
+    .tx-table td { font-size: .875rem; }
+
+    @media (max-width: 576px) {
+        .kpi-value { font-size: 1.5rem; }
+        .period-tabs { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="row align-items-center mb-4 gy-3">
+    <div class="col">
+        <p class="mb-0" style="font-size:.875rem;color:var(--brand-500);">Bem-vindo de volta,</p>
+        <h1 class="fw-800 mb-0" style="font-size:1.625rem;letter-spacing:-.03em;">{{ session.get('usuario', {}).get('nome', '').split()[0] }}</h1>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <a href="{{ url_for('adicionar_transacao') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>Nova Transação
+        </a>
+        <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary d-none d-sm-inline-flex">
+            <i class="fas fa-chart-bar"></i>Relatórios
+        </a>
+    </div>
+</div>
+
+<!-- ═══ KPI CARDS ════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+    <!-- Saldo -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Saldo Total</div>
+                    <div class="kpi-value {% if saldo.saldo >= 0 %}text-accent{% else %}text-danger{% endif %}">
+                        R$&nbsp;{{ "%.2f"|format(saldo.saldo) }}
+                    </div>
+                    <div class="kpi-sub">
+                        {% if saldo.saldo >= 0 %}
+                            <i class="fas fa-check-circle up"></i><span class="up">Situação saudável</span>
+                        {% else %}
+                            <i class="fas fa-exclamation-circle down"></i><span class="down">Atenção necessária</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="kpi-icon-wrap {% if saldo.saldo >= 0 %}bg-accent-soft{% else %}bg-danger-soft{% endif %}">
+                    <i class="fas fa-wallet {% if saldo.saldo >= 0 %}text-accent{% else %}text-danger{% endif %}"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receitas -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Receitas do Mês</div>
+                    <div class="kpi-value text-success">R$&nbsp;{{ "%.2f"|format(mes_atual.receitas) }}</div>
+                    <div class="kpi-sub"><i class="fas fa-calendar-alt"></i>Mês atual</div>
+                </div>
+                <div class="kpi-icon-wrap bg-success-soft">
+                    <i class="fas fa-arrow-down text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Despesas -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Despesas do Mês</div>
+                    <div class="kpi-value text-danger">R$&nbsp;{{ "%.2f"|format(mes_atual.despesas) }}</div>
+                    <div class="kpi-sub">
+                        {% set economia = mes_atual.receitas - mes_atual.despesas %}
+                        {% if economia >= 0 %}
+                            <i class="fas fa-piggy-bank up"></i><span class="up">Economizou R$&nbsp;{{ "%.2f"|format(economia) }}</span>
+                        {% else %}
+                            <i class="fas fa-exclamation-circle down"></i><span class="down">Déficit R$&nbsp;{{ "%.2f"|format(-economia) }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="kpi-icon-wrap bg-danger-soft">
+                    <i class="fas fa-arrow-up text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Economia -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="kpi-card">
+            {% set eco = mes_atual.receitas - mes_atual.despesas %}
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Economia do Mês</div>
+                    <div class="kpi-value {% if eco >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        R$&nbsp;{{ "%.2f"|format(eco) }}
+                    </div>
+                    <div class="kpi-sub">
+                        {% if mes_atual.receitas > 0 %}
+                            {% set pct = (eco / mes_atual.receitas * 100)|round(1) %}
+                            <i class="fas fa-chart-line {% if pct >= 0 %}up{% else %}down{% endif %}"></i>
+                            <span class="{% if pct >= 0 %}up{% else %}down{% endif %}">{{ pct }}% da receita</span>
+                        {% else %}
+                            <span>Sem receitas</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="kpi-icon-wrap {% if eco >= 0 %}bg-success-soft{% else %}bg-danger-soft{% endif %}">
+                    <i class="fas fa-chart-line {% if eco >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CHARTS + TRANSACTIONS ════════════════════════ -->
+<div class="row g-3 mb-4">
+    <!-- Recent Transactions -->
+    <div class="col-lg-8">
+        <div class="chart-card h-100">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-list-ul" style="color:var(--accent-dark);"></i>
+                    Transações Recentes
+                </span>
+                <div class="d-flex gap-2">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('exportar_excel') }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-file-excel"></i><span class="d-none d-md-inline ms-1">Excel</span>
+                        </a>
+                        <a href="{{ url_for('exportar_pdf') }}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-file-pdf"></i><span class="d-none d-md-inline ms-1">PDF</span>
+                        </a>
+                    </div>
+                    <a href="{{ url_for('adicionar_transacao') }}" class="btn btn-sm btn-primary d-none d-md-flex">
+                        <i class="fas fa-plus"></i>Adicionar
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+                <table class="table tx-table mb-0">
+                    <thead style="position:sticky;top:0;z-index:1;background:white;">
+                        <tr>
+                            <th style="padding-left:1.5rem;">Data</th>
+                            <th>Descrição</th>
+                            <th class="d-none d-md-table-cell">Categoria</th>
+                            <th class="d-none d-sm-table-cell">Tipo</th>
+                            <th class="text-end">Valor</th>
+                            <th style="padding-right:1.5rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if transacoes %}
+                            {% for t in transacoes %}
+                            <tr>
+                                <td style="padding-left:1.5rem;" class="font-mono" style="color:var(--brand-500);">
+                                    {{ t.data.strftime('%d/%m/%y') }}
+                                </td>
+                                <td><span class="fw-600">{{ t.descricao }}</span></td>
+                                <td class="d-none d-md-table-cell">
+                                    <span class="badge badge-neutral">{{ t.categoria }}</span>
+                                </td>
+                                <td class="d-none d-sm-table-cell">
+                                    {% if t.tipo == 'receita' %}
+                                        <span class="badge badge-success"><i class="fas fa-arrow-up me-1"></i>Receita</span>
+                                    {% else %}
+                                        <span class="badge badge-danger"><i class="fas fa-arrow-down me-1"></i>Despesa</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end font-mono fw-600 {% if t.tipo == 'receita' %}text-success{% else %}text-danger{% endif %}">
+                                    {% if t.tipo == 'receita' %}+{% else %}−{% endif %}R$&nbsp;{{ "%.2f"|format(t.valor) }}
+                                </td>
+                                <td style="padding-right:1.5rem;">
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmarExclusao('{{ url_for('excluir_transacao', id=t.id) }}','Excluir transação','Deseja excluir &quot;{{ t.descricao }}&quot;? Esta ação é irreversível.')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state py-4">
+                                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                                        <h5>Nenhuma transação ainda</h5>
+                                        <p>Registre sua primeira receita ou despesa.</p>
+                                        <a href="{{ url_for('adicionar_transacao') }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus"></i>Adicionar
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="chart-card mb-3">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-bolt" style="color:var(--warning);"></i>Ações Rápidas
+                </span>
+            </div>
+            <div class="chart-card-body">
+                <div class="quick-actions-list">
+                    <a href="{{ url_for('adicionar_transacao') }}" class="quick-action-btn">
+                        <div class="qa-icon bg-success-soft"><i class="fas fa-plus text-success"></i></div>
+                        Nova Transação
+                    </a>
+                    <a href="{{ url_for('metas') }}" class="quick-action-btn">
+                        <div class="qa-icon bg-accent-soft"><i class="fas fa-bullseye text-accent"></i></div>
+                        Minhas Metas
+                    </a>
+                    <a href="{{ url_for('relatorios') }}" class="quick-action-btn">
+                        <div class="qa-icon bg-warning-soft"><i class="fas fa-chart-pie text-warning" style="color:var(--warning)!important;"></i></div>
+                        Ver Relatórios
+                    </a>
+                    <a href="{{ url_for('configuracoes') }}" class="quick-action-btn">
+                        <div class="qa-icon" style="background:var(--brand-100);"><i class="fas fa-sliders" style="color:var(--brand-500);"></i></div>
+                        Configurações
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-lightbulb" style="color:var(--warning);"></i>Dica Financeira
+                </span>
+            </div>
+            <div class="chart-card-body">
+                <div class="insight-card" style="background:var(--warning-light);border-radius:var(--radius-md);padding:1rem;">
+                    <div class="insight-icon" style="background:white;">
+                        <i class="fas fa-percentage" style="color:var(--warning);"></i>
+                    </div>
+                    <div>
+                        <div class="insight-title" style="color:#92400e;">Regra 50-30-20</div>
+                        <div class="insight-body" style="color:#78350f;">
+                            50% necessidades · 30% desejos · 20% poupança. Um framework simples para equilibrar seu orçamento.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

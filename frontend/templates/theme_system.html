@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Design — Simplifica Finanças</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --brand-900:#0f172a; --brand-800:#1e293b; --brand-700:#334155;
+            --brand-500:#64748b; --brand-300:#cbd5e1; --brand-100:#f1f5f9; --brand-50:#f8fafc;
+            --accent:#6366f1; --accent-dark:#4f46e5; --accent-light:#818cf8; --accent-glow:rgba(99,102,241,.15);
+            --success:#10b981; --success-light:#d1fae5;
+            --danger:#f43f5e;  --danger-light:#ffe4e6;
+            --warning:#f59e0b; --warning-light:#fef3c7;
+            --info:#0ea5e9;    --info-light:#e0f2fe;
+            --radius-sm:6px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px; --radius-full:9999px;
+            --shadow-sm:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1);
+            --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+            --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+            --font-sans:'Plus Jakarta Sans',system-ui,sans-serif;
+            --font-mono:'DM Mono',monospace;
+        }
+        *{box-sizing:border-box;}
+        body{font-family:var(--font-sans);background:var(--brand-50);color:var(--brand-800);-webkit-font-smoothing:antialiased;}
+        .ds-nav{background:white;border-bottom:1px solid var(--brand-100);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;}
+        .ds-logo{font-weight:800;font-size:1.1rem;color:var(--accent-dark);display:flex;align-items:center;gap:.5rem;}
+        .ds-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:.75rem;}
+        .ds-badge{background:rgba(16,185,129,.12);color:#065f46;border-radius:var(--radius-full);padding:.2rem .625rem;font-size:.72rem;font-weight:700;}
+        .ds-container{max-width:1100px;margin:0 auto;padding:3rem 1.5rem;}
+        .ds-section{margin-bottom:4rem;}
+        .ds-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--brand-500);margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--brand-100);}
+        /* Colors */
+        .color-grid{display:flex;flex-wrap:wrap;gap:.75rem;}
+        .color-chip{border-radius:var(--radius-md);overflow:hidden;width:80px;text-align:center;}
+        .color-swatch{height:60px;border-radius:var(--radius-md) var(--radius-md) 0 0;}
+        .color-label{font-size:.65rem;font-weight:600;color:var(--brand-500);padding:.3rem .5rem;background:white;border:1px solid var(--brand-100);border-top:none;border-radius:0 0 var(--radius-md) var(--radius-md);}
+        /* Typography */
+        .type-row{display:flex;align-items:baseline;gap:1.5rem;padding:.875rem 0;border-bottom:1px solid var(--brand-50);}
+        .type-meta{min-width:150px;font-size:.72rem;font-weight:600;color:var(--brand-500);font-family:var(--font-mono);}
+        /* Buttons */
+        .btn-row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;}
+        .btn{font-family:var(--font-sans);font-weight:600;font-size:.875rem;border-radius:var(--radius-md);padding:.625rem 1.25rem;transition:all .2s;border:1.5px solid transparent;display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;}
+        .btn-primary{background:var(--accent-dark);border-color:var(--accent-dark);color:white;}
+        .btn-primary:hover{background:var(--accent);border-color:var(--accent);color:white;}
+        .btn-success{background:var(--success);border-color:var(--success);color:white;}
+        .btn-danger{background:var(--danger);border-color:var(--danger);color:white;}
+        .btn-outline-primary{color:var(--accent-dark);border-color:var(--accent-dark);background:transparent;}
+        .btn-outline-secondary{color:var(--brand-700);border-color:var(--brand-300);background:white;}
+        .btn-lg{padding:.875rem 1.75rem;font-size:1rem;border-radius:var(--radius-lg);}
+        .btn-sm{padding:.375rem .75rem;font-size:.8125rem;border-radius:var(--radius-sm);}
+        /* Badges */
+        .badge-row{display:flex;flex-wrap:wrap;gap:.625rem;align-items:center;}
+        .badge{font-family:var(--font-sans);font-size:.72rem;font-weight:600;padding:.3em .65em;border-radius:var(--radius-full);}
+        .badge-success{background:var(--success-light);color:#065f46;}
+        .badge-danger{background:var(--danger-light);color:#9f1239;}
+        .badge-warning{background:var(--warning-light);color:#92400e;}
+        .badge-info{background:var(--info-light);color:#0c4a6e;}
+        .badge-neutral{background:var(--brand-100);color:var(--brand-700);}
+        .badge-accent{background:var(--accent-glow);color:var(--accent-dark);}
+        /* Cards */
+        .ds-card{background:white;border:1px solid var(--brand-100);border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-sm);}
+        .ds-card-header{font-size:.875rem;font-weight:700;margin-bottom:.75rem;color:var(--brand-500);}
+        /* Forms */
+        .form-control,.form-select{font-family:var(--font-sans);border:1.5px solid #e2e8f0;border-radius:var(--radius-md);padding:.625rem .875rem;font-size:.9375rem;color:var(--brand-800);background:white;transition:border-color .15s,box-shadow .15s;width:100%;}
+        .form-control:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);outline:none;}
+        .form-label{font-weight:600;font-size:.875rem;color:var(--brand-700);margin-bottom:.4rem;display:block;}
+        /* Stat card */
+        .stat-card{background:white;border:1px solid var(--brand-100);border-radius:var(--radius-lg);padding:1.5rem;}
+        .stat-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-500);}
+        .stat-value{font-size:2rem;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+        /* Saldo card */
+        .saldo-hero{background:linear-gradient(135deg,#1e293b,#0f172a);color:white;border-radius:var(--radius-xl);padding:2rem;position:relative;overflow:hidden;}
+        .saldo-hero::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%);pointer-events:none;}
+        /* Progress */
+        .progress-demo{height:8px;background:var(--brand-100);border-radius:var(--radius-full);overflow:hidden;margin-bottom:.75rem;}
+        .progress-fill{height:100%;border-radius:var(--radius-full);}
+        /* Spacing */
+        .spacing-grid{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;}
+        .spacing-block{display:flex;flex-direction:column;align-items:center;gap:.4rem;}
+        .spacing-box{background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:4px;}
+        .spacing-label{font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:var(--font-mono);}
+    </style>
+</head>
+<body>
+
+<nav class="ds-nav">
+    <div class="ds-logo">
+        <div class="ds-logo-icon"><i class="fas fa-wave-square"></i></div>
+        Simplifica
+    </div>
+    <span class="ds-badge">Design System v1.0</span>
+    <a href="/" style="margin-left:auto;font-size:.875rem;color:var(--brand-500);text-decoration:none;">
+        <i class="fas fa-arrow-left me-1"></i>Voltar
+    </a>
+</nav>
+
+<div class="ds-container">
+
+    <!-- ── INTRO ──────────────────────────────────── -->
+    <div style="margin-bottom:3rem;">
+        <h1 style="font-size:2.5rem;font-weight:800;letter-spacing:-.04em;margin-bottom:.625rem;">Design System</h1>
+        <p style="font-size:1.0625rem;color:var(--brand-500);max-width:600px;line-height:1.7;">
+            Tokens, componentes e padrões visuais do Simplifica Finanças. Use como referência para manter consistência em toda a interface.
+        </p>
+    </div>
+
+    <!-- ── COLORS ─────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Paleta de Cores</div>
+        <div style="margin-bottom:1.5rem;">
+            <p style="font-size:.8125rem;color:var(--brand-500);margin-bottom:1rem;font-weight:600;">MARCA</p>
+            <div class="color-grid">
+                <div class="color-chip"><div class="color-swatch" style="background:#0f172a;"></div><div class="color-label">900</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#1e293b;"></div><div class="color-label">800</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#334155;"></div><div class="color-label">700</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#64748b;"></div><div class="color-label">500</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#cbd5e1;"></div><div class="color-label">300</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#f1f5f9;border:1px solid #e2e8f0;"></div><div class="color-label">100</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#f8fafc;border:1px solid #e2e8f0;"></div><div class="color-label">50</div></div>
+            </div>
+        </div>
+        <div>
+            <p style="font-size:.8125rem;color:var(--brand-500);margin-bottom:1rem;font-weight:600;">SEMÂNTICAS</p>
+            <div class="color-grid">
+                <div class="color-chip"><div class="color-swatch" style="background:#4f46e5;"></div><div class="color-label">Accent</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#10b981;"></div><div class="color-label">Success</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#f43f5e;"></div><div class="color-label">Danger</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#f59e0b;"></div><div class="color-label">Warning</div></div>
+                <div class="color-chip"><div class="color-swatch" style="background:#0ea5e9;"></div><div class="color-label">Info</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TYPOGRAPHY ─────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Tipografia — Plus Jakarta Sans</div>
+        <div>
+            <div class="type-row">
+                <div class="type-meta">Display / fw-800</div>
+                <div style="font-size:3rem;font-weight:800;letter-spacing:-.04em;">Finanças sob controle</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta">H1 / 1.75rem / fw-800</div>
+                <div style="font-size:1.75rem;font-weight:800;letter-spacing:-.03em;">Dashboard Financeiro</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta">H2 / 1.375rem / fw-700</div>
+                <div style="font-size:1.375rem;font-weight:700;letter-spacing:-.02em;">Últimas Transações</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta">Body / 1rem / fw-400</div>
+                <div style="font-size:1rem;">Registre suas movimentações diariamente para ter um controle preciso.</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta">Small / .875rem / fw-500</div>
+                <div style="font-size:.875rem;color:var(--brand-500);">Atualizado hoje às 14:32 — Mês atual</div>
+            </div>
+            <div class="type-row">
+                <div class="type-meta">Mono / DM Mono</div>
+                <div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent-dark);">R$ 8.450,00 — 2025-01-15</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── BUTTONS ────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Botões</div>
+        <div class="btn-row mb-3">
+            <button class="btn btn-primary"><i class="fas fa-plus"></i>Primary</button>
+            <button class="btn btn-success"><i class="fas fa-check"></i>Success</button>
+            <button class="btn btn-danger"><i class="fas fa-trash"></i>Danger</button>
+            <button class="btn btn-outline-primary">Outline Primary</button>
+            <button class="btn btn-outline-secondary">Outline Secondary</button>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i>Large</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-sm">Small</button>
+        </div>
+    </div>
+
+    <!-- ── BADGES ─────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Badges</div>
+        <div class="badge-row">
+            <span class="badge badge-success"><i class="fas fa-arrow-up me-1"></i>Receita</span>
+            <span class="badge badge-danger"><i class="fas fa-arrow-down me-1"></i>Despesa</span>
+            <span class="badge badge-warning">Atenção</span>
+            <span class="badge badge-info">Info</span>
+            <span class="badge badge-neutral">Categoria</span>
+            <span class="badge badge-accent">Modo Avançado</span>
+        </div>
+    </div>
+
+    <!-- ── CARDS ──────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Cards</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+
+            <!-- Stat card -->
+            <div class="stat-card">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:.5rem;">
+                    <div>
+                        <div class="stat-label">Receitas do Mês</div>
+                        <div class="stat-value text-success" style="color:var(--success);">R$ 5.200,00</div>
+                    </div>
+                    <div style="width:44px;height:44px;background:var(--success-light);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--success);">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+                <div style="font-size:.8125rem;color:var(--brand-500);display:flex;align-items:center;gap:.3rem;">
+                    <i class="fas fa-calendar-alt"></i>Mês atual
+                </div>
+            </div>
+
+            <!-- Saldo card -->
+            <div class="saldo-hero">
+                <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.5;margin-bottom:.5rem;">Saldo Atual</div>
+                <div style="font-size:2.5rem;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;">R$ 8.450,00</div>
+                <div style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-full);padding:.3rem .75rem;font-size:.8125rem;font-weight:600;color:#6ee7b7;">
+                    <i class="fas fa-arrow-up"></i>Positivo!
+                </div>
+            </div>
+
+            <!-- Meta card -->
+            <div class="ds-card">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;">
+                    <div style="width:44px;height:44px;background:rgba(99,102,241,.1);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--accent-dark);font-size:1.1rem;"><i class="fas fa-bullseye"></i></div>
+                    <span style="font-size:.75rem;font-weight:700;background:var(--accent-glow);color:var(--accent-dark);padding:.25rem .625rem;border-radius:var(--radius-full);">65%</span>
+                </div>
+                <div style="font-weight:700;margin-bottom:.25rem;">Viagem de Férias</div>
+                <div style="font-size:.8rem;color:var(--brand-500);margin-bottom:1rem;"><i class="fas fa-calendar-alt me-1"></i>Prazo: 31/12/2025</div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;">
+                    <span style="font-size:1.25rem;font-weight:800;color:var(--accent-dark);">R$ 6.500</span>
+                    <span style="font-size:.875rem;color:var(--brand-500);">de R$ 10.000</span>
+                </div>
+                <div class="progress-demo"><div class="progress-fill" style="width:65%;background:var(--accent);"></div></div>
+                <div style="font-size:.8rem;color:var(--brand-500);">Faltam R$ 3.500,00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── FORMS ──────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Formulários</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.25rem;max-width:700px;">
+            <div>
+                <label class="form-label">Campo de Texto</label>
+                <input type="text" class="form-control" placeholder="Ex: Supermercado">
+            </div>
+            <div>
+                <label class="form-label">Seleção</label>
+                <select class="form-select">
+                    <option>Alimentação</option>
+                    <option>Transporte</option>
+                    <option>Saúde</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Campo Focado</label>
+                <input type="text" class="form-control" value="Com foco ativo" style="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);">
+            </div>
+            <div>
+                <label class="form-label">Campo com Erro</label>
+                <input type="text" class="form-control" value="Valor inválido" style="border-color:var(--danger);box-shadow:0 0 0 3px rgba(244,63,94,.15);">
+                <div style="font-size:.75rem;color:var(--danger);margin-top:.3rem;font-weight:500;">Valor não pode ser negativo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PROGRESS ───────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Barras de Progresso</div>
+        <div style="max-width:500px;display:flex;flex-direction:column;gap:1rem;">
+            <div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:.375rem;"><span>Meta Viagem</span><span style="color:var(--accent-dark);">65%</span></div>
+                <div class="progress-demo"><div class="progress-fill" style="width:65%;background:var(--accent);"></div></div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:.375rem;"><span>Meta Reserva</span><span style="color:var(--success);">88%</span></div>
+                <div class="progress-demo"><div class="progress-fill" style="width:88%;background:var(--success);"></div></div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:.375rem;"><span>Meta Carro</span><span style="color:var(--warning);">32%</span></div>
+                <div class="progress-demo"><div class="progress-fill" style="width:32%;background:var(--warning);"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SPACING ────────────────────────────────── -->
+    <div class="ds-section">
+        <div class="ds-section-title">Espaçamentos & Raios</div>
+        <div style="margin-bottom:2rem;">
+            <p style="font-size:.8125rem;font-weight:600;color:var(--brand-500);margin-bottom:1rem;">BORDER RADIUS</p>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+                <div style="text-align:center;">
+                    <div style="width:60px;height:60px;background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:6px;margin:0 auto .4rem;"></div>
+                    <div style="font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:monospace;">sm 6px</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="width:60px;height:60px;background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:12px;margin:0 auto .4rem;"></div>
+                    <div style="font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:monospace;">md 12px</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="width:60px;height:60px;background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:18px;margin:0 auto .4rem;"></div>
+                    <div style="font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:monospace;">lg 18px</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="width:60px;height:60px;background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:24px;margin:0 auto .4rem;"></div>
+                    <div style="font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:monospace;">xl 24px</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="width:60px;height:30px;background:var(--accent-glow);border:1.5px solid var(--accent);border-radius:9999px;margin:0 auto .4rem;"></div>
+                    <div style="font-size:.65rem;font-weight:600;color:var(--brand-500);font-family:monospace;">full</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

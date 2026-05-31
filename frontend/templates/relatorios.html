@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+{% block title %}Relatórios Financeiros — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-lg);
+        height: 100%;
+    }
+    .chart-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--brand-50);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .chart-card-title {
+        font-weight: 700; font-size: .9375rem;
+        display: flex; align-items: center; gap: .5rem;
+        color: var(--brand-800);
+    }
+    .chart-card-body { padding: 1.5rem; }
+
+    .summary-row {
+        display: flex; justify-content: space-between;
+        padding: .75rem 0;
+        border-bottom: 1px solid var(--brand-50);
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { font-size: .875rem; display: flex; align-items: center; gap: .5rem; color: var(--brand-700); }
+    .summary-value { font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .cat-row {
+        display: flex; align-items: center; gap: .875rem;
+        padding: .75rem 0;
+        border-bottom: 1px solid var(--brand-50);
+    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { flex: 1; font-size: .875rem; font-weight: 600; }
+    .cat-bar-wrap { flex: 2; }
+    .cat-bar-track { height: 6px; background: var(--brand-100); border-radius: 3px; overflow: hidden; }
+    .cat-bar-fill  { height: 100%; border-radius: 3px; }
+    .cat-value     { font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 80px; text-align: right; }
+    .cat-pct       { font-size: .78rem; color: var(--brand-500); min-width: 38px; text-align: right; }
+
+    .insight-row {
+        display: flex; align-items: flex-start; gap: 1rem;
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: .625rem;
+    }
+    .insight-row:last-child { margin-bottom: 0; }
+    .insight-row .i-icon {
+        width: 36px; height: 36px; border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .875rem; flex-shrink: 0;
+    }
+    .insight-row .i-title { font-size: .875rem; font-weight: 700; margin-bottom: .15rem; }
+    .insight-row .i-body  { font-size: .8125rem; color: var(--brand-500); line-height: 1.5; }
+
+    .period-chips { display: flex; gap: .375rem; flex-wrap: wrap; }
+    .period-chip {
+        padding: .3rem .75rem; border-radius: var(--radius-full);
+        font-size: .8rem; font-weight: 600;
+        border: 1.5px solid var(--brand-100);
+        background: white; color: var(--brand-700);
+        cursor: pointer; transition: all .15s;
+    }
+    .period-chip:hover { border-color: var(--brand-300); }
+    .period-chip.active { background: var(--accent-dark); color: white; border-color: var(--accent-dark); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="row align-items-center mb-4 gy-3">
+    <div class="col">
+        <h1 class="fw-800 mb-1" style="font-size:1.625rem;letter-spacing:-.03em;">
+            <i class="fas fa-chart-bar me-2" style="color:var(--accent-dark);font-size:1.25rem;"></i>
+            Relatórios Financeiros
+        </h1>
+        <p style="color:var(--brand-500);margin:0;">Análise detalhada das suas finanças</p>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <a href="{{ url_for('exportar_excel') }}" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-file-excel"></i>Excel
+        </a>
+        <a href="{{ url_for('exportar_pdf') }}" class="btn btn-outline-danger btn-sm">
+            <i class="fas fa-file-pdf"></i>PDF
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filter-card">
+    <div class="row align-items-center g-3">
+        <div class="col-12 col-md-auto">
+            <span style="font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-500);">Período</span>
+        </div>
+        <div class="col-12 col-md">
+            <div class="period-chips">
+                {% for label in ['Este mês','Últimos 3 meses','Últimos 6 meses','Este ano'] %}
+                <button type="button" class="period-chip {% if loop.first %}active{% endif %}"
+                        onclick="selecionarPeriodo(this)">{{ label }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <select class="form-select form-select-sm" style="min-width:120px;">
+                <option>Todos os tipos</option>
+                <option>Receitas</option>
+                <option>Despesas</option>
+            </select>
+            <button class="btn btn-primary btn-sm">
+                <i class="fas fa-filter"></i>Filtrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CHARTS ════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+    <!-- Despesas por Categoria -->
+    <div class="col-lg-6">
+        <div class="chart-card h-100">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-chart-pie" style="color:var(--accent-dark);"></i>
+                    Despesas por Categoria
+                </span>
+            </div>
+            <div class="chart-card-body">
+                {% if despesas_categoria %}
+                    <div class="mb-4" style="max-height:220px;display:flex;justify-content:center;">
+                        <canvas id="chartPie"></canvas>
+                    </div>
+                    {% set total_geral = despesas_categoria|sum(attribute='total') %}
+                    {% set colors = ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981','#0ea5e9','#8b5cf6','#f43f5e'] %}
+                    {% for item in despesas_categoria %}
+                    <div class="cat-row">
+                        <div class="cat-dot" style="background:{{ colors[loop.index0 % colors|length] }};"></div>
+                        <div class="cat-name">{{ item.categoria }}</div>
+                        <div class="cat-bar-wrap">
+                            <div class="cat-bar-track">
+                                <div class="cat-bar-fill"
+                                     style="width:{{ (item.total / total_geral * 100)|round(1) }}%;background:{{ colors[loop.index0 % colors|length] }};"></div>
+                            </div>
+                        </div>
+                        <div class="cat-value text-danger">R$ {{ "%.2f"|format(item.total) }}</div>
+                        <div class="cat-pct">{{ (item.total / total_geral * 100)|round(1) }}%</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state py-4">
+                        <div class="empty-state-icon"><i class="fas fa-chart-pie"></i></div>
+                        <h5>Sem dados ainda</h5>
+                        <p>Registre despesas para ver a análise por categoria.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Evolução Mensal -->
+    <div class="col-lg-6">
+        <div class="chart-card h-100">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-chart-line" style="color:var(--success);"></i>
+                    Evolução Mensal
+                </span>
+            </div>
+            <div class="chart-card-body">
+                {% if evolucao_mensal %}
+                    <canvas id="chartLine" style="max-height:300px;"></canvas>
+                {% else %}
+                    <div class="empty-state py-4">
+                        <div class="empty-state-icon"><i class="fas fa-chart-line"></i></div>
+                        <h5>Dados insuficientes</h5>
+                        <p>Registre transações por pelo menos 2 meses para visualizar a evolução.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ TABLE + INSIGHTS ══════════════════════════════ -->
+<div class="row g-3">
+    <!-- Tabela Resumo -->
+    <div class="col-lg-8">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-table" style="color:var(--accent-dark);"></i>
+                    Resumo por Categoria
+                </span>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('exportar_excel') }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-file-excel"></i><span class="d-none d-sm-inline ms-1">Excel</span>
+                    </a>
+                    <a href="{{ url_for('exportar_pdf') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-file-pdf"></i><span class="d-none d-sm-inline ms-1">PDF</span>
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:.875rem;">
+                    <thead>
+                        <tr>
+                            <th style="padding-left:1.5rem;">Categoria</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Participação</th>
+                            <th class="text-center d-none d-md-table-cell" style="padding-right:1.5rem;">Tendência</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if despesas_categoria %}
+                            {% set total_geral = despesas_categoria|sum(attribute='total') %}
+                            {% for item in despesas_categoria %}
+                            <tr>
+                                <td style="padding-left:1.5rem;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
+                                        <strong>{{ item.categoria }}</strong>
+                                    </div>
+                                </td>
+                                <td class="text-end font-mono fw-600 text-danger">
+                                    R$ {{ "%.2f"|format(item.total) }}
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge badge-danger">
+                                        {{ "%.1f"|format(item.total / total_geral * 100) }}%
+                                    </span>
+                                </td>
+                                <td class="text-center d-none d-md-table-cell" style="padding-right:1.5rem;">
+                                    <i class="fas fa-minus" style="color:var(--brand-500);font-size:.75rem;"></i>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background:var(--brand-50);">
+                                <td style="padding-left:1.5rem;" class="fw-700">TOTAL GERAL</td>
+                                <td class="text-end font-mono fw-800 text-danger">
+                                    R$ {{ "%.2f"|format(total_geral) }}
+                                </td>
+                                <td class="text-end"><span class="badge badge-neutral fw-700">100%</span></td>
+                                <td class="d-none d-md-table-cell"></td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="empty-state py-2">
+                                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                                        <h5>Nenhuma despesa registrada</h5>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="col-lg-4">
+        <div class="chart-card h-100">
+            <div class="chart-card-header">
+                <span class="chart-card-title">
+                    <i class="fas fa-lightbulb" style="color:var(--warning);"></i>
+                    Análise & Insights
+                </span>
+            </div>
+            <div class="chart-card-body">
+                <div class="insight-row" style="background:var(--success-light);">
+                    <div class="i-icon" style="background:white;color:var(--success);">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="i-title" style="color:#065f46;">Ponto Positivo</div>
+                        <div class="i-body" style="color:#065f46;opacity:.8;">
+                            Suas receitas estão superando as despesas. Continue com esse equilíbrio!
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-row" style="background:var(--warning-light);">
+                    <div class="i-icon" style="background:white;color:var(--warning);">
+                        <i class="fas fa-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="i-title" style="color:#92400e;">Atenção</div>
+                        <div class="i-body" style="color:#92400e;opacity:.8;">
+                            Alimentação é sua maior categoria de gastos. Planejar refeições pode reduzir em até 30%.
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-row" style="background:var(--accent-glow);">
+                    <div class="i-icon" style="background:white;color:var(--accent-dark);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <div class="i-title" style="color:var(--accent-dark);">Dica Estratégica</div>
+                        <div class="i-body" style="color:var(--accent-dark);opacity:.8;">
+                            Aplique a regra 50/30/20: necessidades, desejos e poupança para equilibrar seu orçamento.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const despesasCategoria = {{ despesas_categoria|tojson }};
+    const evolucaoMensal    = {{ evolucao_mensal|tojson }};
+
+    const palette = ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981','#0ea5e9','#8b5cf6','#f43f5e'];
+
+    Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // Donut Chart
+    if (despesasCategoria && despesasCategoria.length > 0) {
+        new Chart(document.getElementById('chartPie'), {
+            type: 'doughnut',
+            data: {
+                labels: despesasCategoria.map(i => i.categoria),
+                datasets: [{
+                    data: despesasCategoria.map(i => i.total),
+                    backgroundColor: palette.slice(0, despesasCategoria.length),
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' R$ ' + ctx.parsed.toLocaleString('pt-BR',{minimumFractionDigits:2})
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Line Chart
+    if (evolucaoMensal && evolucaoMensal.length > 0) {
+        const meses    = [...new Set(evolucaoMensal.map(i => i.mes))].sort();
+        const receitas = meses.map(m => { const r = evolucaoMensal.find(e => e.mes===m && e.tipo==='receita'); return r ? r.total : 0; });
+        const despesas = meses.map(m => { const r = evolucaoMensal.find(e => e.mes===m && e.tipo==='despesa'); return r ? r.total : 0; });
+        const labels   = meses.map(m => { const [a,mo]=m.split('-'); return mo+'/'+a; });
+
+        new Chart(document.getElementById('chartLine'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: receitas,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,.08)',
+                        tension: .4, fill: true, pointRadius: 4,
+                        pointBackgroundColor: '#10b981',
+                        borderWidth: 2.5
+                    },
+                    {
+                        label: 'Despesas',
+                        data: despesas,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239,68,68,.08)',
+                        tension: .4, fill: true, pointRadius: 4,
+                        pointBackgroundColor: '#ef4444',
+                        borderWidth: 2.5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16, font: { size: 12, weight: '600' } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' ' + ctx.dataset.label + ': R$ ' + ctx.parsed.y.toLocaleString('pt-BR',{minimumFractionDigits:2})
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9', drawBorder: false },
+                        ticks: {
+                            callback: v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:0})
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function selecionarPeriodo(el) {
+        document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+</script>
+{% endblock %}

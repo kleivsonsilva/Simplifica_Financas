@@ -1,0 +1,276 @@
+networks:
+  simplifica_net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  redis_data:
+  postgres_data:
+  rabbitmq_data:
+
+services:
+
+  # ─── INFRAESTRUTURA ───────────────────────────────────────────
+  mongodb:
+    image: mongo:4.4
+    container_name: simplifica_mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-simplifica2025}
+      MONGO_INITDB_DATABASE: simplifica_financas
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./infra/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: simplifica_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-simplifica_auth}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-simplifica2025}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-simplifica_auth}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: simplifica_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-simplifica2025}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-simplifica2025}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: simplifica_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-simplifica2025}
+      RABBITMQ_ERLANG_COOKIE: "simplifica_cookie_secreto_2025"
+      HOME: /tmp
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─── MICROSSERVIÇOS ───────────────────────────────────────────
+  auth-service:
+    build: ./auth-service
+    container_name: simplifica_auth
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-simplifica2025}@postgres:5432/${POSTGRES_DB:-simplifica_auth}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simplifica2025}@redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      SERVICE_PORT: "5001"
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  transaction-service:
+    build: ./transaction-service
+    container_name: simplifica_transactions
+    restart: always
+    environment:
+      MONGO_URL: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-simplifica2025}@mongodb:27017/simplifica_financas?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simplifica2025}@redis:6379/1
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-simplifica2025}@rabbitmq:5672/
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      SERVICE_PORT: "5002"
+    ports:
+      - "5002:5002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  goal-service:
+    build: ./goal-service
+    container_name: simplifica_goals
+    restart: always
+    environment:
+      MONGO_URL: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-simplifica2025}@mongodb:27017/simplifica_financas?authSource=admin
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-simplifica2025}@rabbitmq:5672/
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      SERVICE_PORT: "5003"
+    ports:
+      - "5003:5003"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  report-service:
+    build: ./report-service
+    container_name: simplifica_reports
+    restart: always
+    environment:
+      MONGO_URL: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-simplifica2025}@mongodb:27017/simplifica_financas?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simplifica2025}@redis:6379/2
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      SERVICE_PORT: "5004"
+    ports:
+      - "5004:5004"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5004/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  notification-service:
+    build: ./notification-service
+    container_name: simplifica_notifications
+    restart: always
+    environment:
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-simplifica2025}@rabbitmq:5672/
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simplifica2025}@redis:6379/3
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      SERVICE_PORT: "5005"
+    ports:
+      - "5005:5005"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: simplifica_gateway
+    restart: always
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:5001
+      TRANSACTION_SERVICE_URL: http://transaction-service:5002
+      GOAL_SERVICE_URL: http://goal-service:5003
+      REPORT_SERVICE_URL: http://report-service:5004
+      NOTIFICATION_SERVICE_URL: http://notification-service:5005
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simplifica2025}@redis:6379/4
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+      GATEWAY_PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+      goal-service:
+        condition: service_healthy
+      report-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    networks:
+      - simplifica_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    container_name: simplifica_frontend
+    restart: always
+    environment:
+      API_GATEWAY_URL: http://api-gateway:8000
+      FRONTEND_PORT: "3000"
+      # ✅ CORRIGIDO: JWT_SECRET necessário para sessões Flask estáveis entre workers Gunicorn
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao-use-openssl-rand-hex-32}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - simplifica_net

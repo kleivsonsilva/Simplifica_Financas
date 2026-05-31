@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Nova Transação — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tipo-btn-group { display: flex; gap: .625rem; }
+    .tipo-opt { flex: 1; position: relative; }
+    .tipo-opt input { position: absolute; opacity: 0; width:0; height:0; }
+    .tipo-opt-label {
+        display: flex; align-items: center; justify-content: center; gap: .5rem;
+        padding: .75rem; border: 2px solid var(--brand-100);
+        border-radius: var(--radius-md);
+        font-weight: 600; font-size: .9375rem;
+        cursor: pointer; transition: all .2s;
+        color: var(--brand-700);
+    }
+    .tipo-opt-label:hover { border-color: var(--brand-300); }
+    .tipo-opt input:checked + .tipo-opt-label.receita { border-color: var(--success); background: var(--success-light); color: #065f46; }
+    .tipo-opt input:checked + .tipo-opt-label.despesa { border-color: var(--danger);  background: var(--danger-light);  color: #9f1239; }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position: absolute; left: .875rem; top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-500); font-size: .875rem; pointer-events: none;
+    }
+    .input-with-icon .form-control,
+    .input-with-icon .form-select { padding-left: 2.5rem; }
+
+    .valor-preview {
+        background: var(--brand-50); border: 1px solid var(--brand-100);
+        border-radius: var(--radius-md); padding: .875rem 1.25rem;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: .5rem;
+        animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+
+    .tips-card {
+        background: var(--info-light);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+    }
+    .tips-card ul { margin: 0; padding-left: 1.25rem; }
+    .tips-card li { font-size: .8125rem; color: #0c4a6e; margin-bottom: .25rem; line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb" style="font-size:.875rem;">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" style="color:var(--accent-dark);text-decoration:none;">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color:var(--brand-500);">Nova Transação</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-plus-circle me-2" style="color:var(--accent-dark);"></i>Nova Transação
+            </div>
+            <div class="card-body">
+
+                <form method="POST" action="{{ url_for('adicionar_transacao') }}" id="formTransacao" novalidate>
+
+                    <!-- Tipo -->
+                    <div class="mb-4">
+                        <label class="form-label">Tipo de Transação</label>
+                        <div class="tipo-btn-group">
+                            <div class="tipo-opt">
+                                <input type="radio" name="tipo" id="tipo_receita" value="receita" required>
+                                <label class="tipo-opt-label receita" for="tipo_receita">
+                                    <i class="fas fa-arrow-up"></i>Receita
+                                </label>
+                            </div>
+                            <div class="tipo-opt">
+                                <input type="radio" name="tipo" id="tipo_despesa" value="despesa" required>
+                                <label class="tipo-opt-label despesa" for="tipo_despesa">
+                                    <i class="fas fa-arrow-down"></i>Despesa
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Valor -->
+                    <div class="mb-4">
+                        <label class="form-label" for="valor">Valor</label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-700">R$</span>
+                            <input type="number" class="form-control" id="valor" name="valor"
+                                   placeholder="0.00" step="0.01" min="0.01" required autofocus>
+                        </div>
+                        <div id="valorPreview" style="display:none;" class="valor-preview">
+                            <span style="font-size:.8125rem;color:var(--brand-500);font-weight:600;">Valor</span>
+                            <span id="valorPreviewAmt" style="font-size:1.25rem;font-weight:800;font-variant-numeric:tabular-nums;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="mb-4">
+                        <label class="form-label" for="descricao">Descrição</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-file-alt input-icon"></i>
+                            <input type="text" class="form-control" id="descricao" name="descricao"
+                                   placeholder="Ex: Pagamento de fornecedor, Venda de produto..."
+                                   maxlength="200" required>
+                        </div>
+                        <div class="d-flex justify-content-end mt-1">
+                            <small id="charCount" style="color:var(--brand-500);font-size:.75rem;">0/200</small>
+                        </div>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div class="mb-4">
+                        <label class="form-label" for="categoria">Categoria</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-tags input-icon"></i>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="">Selecione uma categoria</option>
+                                <optgroup label="💰 Receitas">
+                                    <option value="Salário">💼 Salário</option>
+                                    <option value="Vendas">🛒 Vendas</option>
+                                    <option value="Freelance">💻 Freelance</option>
+                                    <option value="Investimentos">📈 Investimentos</option>
+                                    <option value="Bônus">🎁 Bônus</option>
+                                </optgroup>
+                                <optgroup label="💸 Despesas">
+                                    <option value="Alimentação">🍽️ Alimentação</option>
+                                    <option value="Moradia">🏠 Moradia</option>
+                                    <option value="Transporte">🚗 Transporte</option>
+                                    <option value="Saúde">💊 Saúde</option>
+                                    <option value="Educação">📚 Educação</option>
+                                    <option value="Lazer">🎮 Lazer</option>
+                                    <option value="Vestuário">👔 Vestuário</option>
+                                    <option value="Estoque">📦 Estoque / Fornecedores</option>
+                                    <option value="Serviços">🔧 Serviços</option>
+                                </optgroup>
+                                <option value="Outros">📋 Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Data -->
+                    <div class="mb-4">
+                        <label class="form-label" for="data">Data da Transação</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-calendar input-icon"></i>
+                            <input type="date" class="form-control" id="data" name="data" required>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--brand-100);margin:1.75rem 0;">
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-save"></i>Salvar Transação
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips-card mt-3">
+            <h6 style="font-weight:700;color:#0c4a6e;margin-bottom:.5rem;">
+                <i class="fas fa-info-circle me-2"></i>Dicas para Registro
+            </h6>
+            <ul>
+                <li>Seja específico na descrição para facilitar análises futuras</li>
+                <li>Escolha a categoria correta para relatórios mais precisos</li>
+                <li>Registre as transações no mesmo dia para não esquecer</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('data').valueAsDate = new Date();
+
+    const descricaoInput = document.getElementById('descricao');
+    const charCount      = document.getElementById('charCount');
+    descricaoInput.addEventListener('input', function() {
+        charCount.textContent = this.value.length + '/200';
+        charCount.style.color = this.value.length > 180 ? 'var(--warning)' : 'var(--brand-500)';
+    });
+
+    document.getElementById('valor').addEventListener('input', function() {
+        const preview = document.getElementById('valorPreview');
+        const amt     = document.getElementById('valorPreviewAmt');
+        if (this.value && parseFloat(this.value) > 0) {
+            amt.textContent = 'R$ ' + parseFloat(this.value).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+            preview.style.display = 'flex';
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+    document.getElementById('formTransacao').addEventListener('submit', function(e) {
+        const tipo = document.querySelector('input[name="tipo"]:checked');
+        if (!tipo) {
+            e.preventDefault();
+            alert('Selecione o tipo de transação (Receita ou Despesa).');
+        }
+    });
+</script>
+{% endblock %}

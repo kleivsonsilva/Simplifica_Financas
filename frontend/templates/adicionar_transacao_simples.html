@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Adicionar Movimentação — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tipo-opcao { position: relative; }
+    .tipo-opcao input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .tipo-label {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: .75rem;
+        padding: 2rem 1rem;
+        border: 2px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        cursor: pointer;
+        transition: all .2s;
+        min-height: 140px;
+        text-align: center;
+    }
+    .tipo-label:hover { border-color: var(--brand-300); }
+    .tipo-label .tipo-icon {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem;
+        transition: all .2s;
+        background: var(--brand-100);
+        color: var(--brand-500);
+    }
+    .tipo-label .tipo-name  { font-size: 1.1rem; font-weight: 800; }
+    .tipo-label .tipo-desc  { font-size: .8125rem; color: var(--brand-500); }
+
+    .tipo-opcao input:checked + .tipo-label.receita {
+        border-color: var(--success); background: var(--success-light);
+    }
+    .tipo-opcao input:checked + .tipo-label.receita .tipo-icon {
+        background: var(--success); color: white;
+    }
+    .tipo-opcao input:checked + .tipo-label.receita .tipo-name { color: #065f46; }
+
+    .tipo-opcao input:checked + .tipo-label.despesa {
+        border-color: var(--danger); background: var(--danger-light);
+    }
+    .tipo-opcao input:checked + .tipo-label.despesa .tipo-icon {
+        background: var(--danger); color: white;
+    }
+    .tipo-opcao input:checked + .tipo-label.despesa .tipo-name { color: #9f1239; }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position: absolute; left: .875rem; top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-500); font-size: .875rem; pointer-events: none;
+    }
+    .input-with-icon .form-control,
+    .input-with-icon .form-select { padding-left: 2.5rem; }
+
+    .valor-preview {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        color: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem 1.5rem;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: .75rem;
+    }
+    .valor-preview-label { font-size: .8125rem; opacity: .6; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .valor-preview-amount { font-size: 1.625rem; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modo-simples">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            <!-- Voltar -->
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mb-4">
+                <i class="fas fa-arrow-left"></i>Voltar
+            </a>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle me-2" style="color:var(--accent-dark);"></i>Adicionar Movimentação
+                </div>
+                <div class="card-body">
+
+                    <form method="POST" action="{{ url_for('adicionar_transacao') }}" id="formTransacao" novalidate>
+
+                        <!-- Tipo -->
+                        <div class="mb-4">
+                            <label class="form-label">É uma RECEITA ou DESPESA?</label>
+                            <div class="row g-3">
+                                <div class="col-6 tipo-opcao">
+                                    <input type="radio" name="tipo" id="tipo_receita" value="receita" required>
+                                    <label class="tipo-label receita" for="tipo_receita">
+                                        <div class="tipo-icon"><i class="fas fa-arrow-down"></i></div>
+                                        <div class="tipo-name">RECEBI</div>
+                                        <div class="tipo-desc">Dinheiro que entrou</div>
+                                    </label>
+                                </div>
+                                <div class="col-6 tipo-opcao">
+                                    <input type="radio" name="tipo" id="tipo_despesa" value="despesa" required>
+                                    <label class="tipo-label despesa" for="tipo_despesa">
+                                        <div class="tipo-icon"><i class="fas fa-arrow-up"></i></div>
+                                        <div class="tipo-name">GASTEI</div>
+                                        <div class="tipo-desc">Dinheiro que saiu</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Valor -->
+                        <div class="mb-4">
+                            <label class="form-label" for="valor">Qual foi o valor?</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text fw-700">R$</span>
+                                <input type="number" class="form-control" id="valor" name="valor"
+                                       placeholder="0,00" step="0.01" min="0.01" required>
+                            </div>
+                            <div id="valorPreview" class="valor-preview mt-2" style="display:none;">
+                                <span class="valor-preview-label">Valor digitado</span>
+                                <span class="valor-preview-amount" id="valorPreviewAmt"></span>
+                            </div>
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="mb-4">
+                            <label class="form-label" for="descricao">O que foi?</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-comment input-icon"></i>
+                                <input type="text" class="form-control form-control-lg" id="descricao" name="descricao"
+                                       placeholder="Ex: Conta de luz, Supermercado..." required maxlength="200">
+                            </div>
+                        </div>
+
+                        <!-- Categoria -->
+                        <div class="mb-4">
+                            <label class="form-label" for="categoria">Categoria</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-tags input-icon"></i>
+                                <select class="form-select form-select-lg" id="categoria" name="categoria" required>
+                                    <option value="">Escolha uma categoria</option>
+                                    <option value="Alimentação">🍽️ Alimentação</option>
+                                    <option value="Moradia">🏠 Moradia</option>
+                                    <option value="Transporte">🚗 Transporte</option>
+                                    <option value="Saúde">💊 Saúde</option>
+                                    <option value="Lazer">🎮 Lazer</option>
+                                    <option value="Educação">📚 Educação</option>
+                                    <option value="Salário">💰 Salário</option>
+                                    <option value="Vendas">🛒 Vendas</option>
+                                    <option value="Outros">📋 Outros</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Data -->
+                        <div class="mb-5">
+                            <label class="form-label" for="data">Quando foi?</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-calendar input-icon"></i>
+                                <input type="date" class="form-control form-control-lg" id="data" name="data" required>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="fas fa-check-circle fa-lg"></i>SALVAR
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>Cancelar
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('data').valueAsDate = new Date();
+
+    document.getElementById('valor').addEventListener('input', function() {
+        const preview = document.getElementById('valorPreview');
+        const amt     = document.getElementById('valorPreviewAmt');
+        if (this.value && parseFloat(this.value) > 0) {
+            amt.textContent = 'R$ ' + parseFloat(this.value).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+            preview.style.display = 'flex';
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+    document.getElementById('formTransacao').addEventListener('submit', function(e) {
+        const tipo = document.querySelector('input[name="tipo"]:checked');
+        if (!tipo) {
+            e.preventDefault();
+            alert('Selecione se é uma receita ou despesa.');
+        }
+    });
+</script>
+{% endblock %}

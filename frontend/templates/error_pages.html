@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro — Simplifica Finanças</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --accent:#6366f1; --accent-dark:#4f46e5;
+            --brand-900:#0f172a; --brand-800:#1e293b; --brand-500:#64748b;
+            --brand-100:#f1f5f9; --brand-50:#f8fafc;
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--brand-50);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+        .err-nav{height:64px;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--brand-100);display:flex;align-items:center;padding:0 2rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 rgba(0,0,0,.06);}
+        .err-brand{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.125rem;color:var(--accent-dark);text-decoration:none;}
+        .err-brand-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:.8rem;}
+        main{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem 1rem;position:relative;overflow:hidden;}
+        .bg-blobs{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+        .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;}
+        .error-card{background:white;border:1px solid var(--brand-100);border-radius:28px;padding:3.5rem 3rem;max-width:560px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.08);position:relative;z-index:1;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1);}
+        @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+        .error-icon-wrap{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 2rem;font-size:2.25rem;position:relative;animation:iconPulse 3s ease-in-out infinite;}
+        @keyframes iconPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+        .error-code{font-size:5.5rem;font-weight:800;letter-spacing:-.06em;line-height:1;margin-bottom:1rem;background:linear-gradient(135deg,var(--code-from),var(--code-to));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .error-title{font-size:1.5rem;font-weight:700;color:var(--brand-800);margin-bottom:.625rem;letter-spacing:-.02em;}
+        .error-msg{font-size:.9375rem;color:var(--brand-500);line-height:1.7;max-width:420px;margin:0 auto 2rem;}
+        .suggestions-box{background:var(--brand-50);border:1px solid var(--brand-100);border-radius:14px;padding:1.25rem 1.5rem;text-align:left;margin-bottom:2rem;}
+        .suggestions-title{font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--brand-500);margin-bottom:.875rem;display:flex;align-items:center;gap:.5rem;}
+        .suggestions-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;}
+        .suggestions-list li{display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--brand-800);line-height:1.5;}
+        .suggestions-list li i{font-size:.7rem;color:var(--accent);margin-top:.25rem;flex-shrink:0;}
+        .error-actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;}
+        .btn-err{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-radius:12px;font-weight:600;font-size:.9375rem;text-decoration:none;border:none;cursor:pointer;transition:all .2s;font-family:inherit;}
+        .btn-err:active{transform:scale(.97);}
+        .btn-err-primary{background:var(--accent-dark);color:white;box-shadow:0 4px 12px rgba(79,70,229,.3);}
+        .btn-err-primary:hover{background:var(--accent);color:white;transform:translateY(-2px);}
+        .btn-err-ghost{background:white;color:var(--brand-800);border:1.5px solid var(--brand-100);}
+        .btn-err-ghost:hover{background:var(--brand-50);transform:translateY(-2px);}
+        footer{padding:1.5rem;text-align:center;font-size:.8125rem;color:var(--brand-500);border-top:1px solid var(--brand-100);background:white;}
+        .demo-switcher{position:fixed;bottom:1.5rem;right:1.5rem;background:white;border:1px solid var(--brand-100);border-radius:14px;padding:1rem 1.25rem;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:190px;}
+        .demo-switcher label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--brand-500);display:block;margin-bottom:.5rem;}
+        .demo-switcher select{width:100%;padding:.4rem .75rem;border:1.5px solid var(--brand-100);border-radius:8px;font-family:inherit;font-size:.875rem;font-weight:600;color:var(--brand-800);background:white;}
+        @media(max-width:480px){.error-card{padding:2.5rem 1.5rem;}.error-code{font-size:4rem;}.error-icon-wrap{width:72px;height:72px;font-size:1.75rem;}.error-actions{flex-direction:column;}.btn-err{width:100%;justify-content:center;}.demo-switcher{left:1rem;right:1rem;bottom:1rem;}}
+    </style>
+</head>
+<body>
+    <nav class="err-nav">
+        <a href="/" class="err-brand">
+            <div class="err-brand-icon"><i class="fas fa-wave-square"></i></div>
+            Simplifica
+        </a>
+    </nav>
+    <main>
+        <div class="bg-blobs" id="bgBlobs"></div>
+        <div class="error-card" id="errorCard"></div>
+    </main>
+    <footer>&copy; 2025 Simplifica Finanças &mdash; Controle financeiro simples e eficiente</footer>
+    <div class="demo-switcher">
+        <label>Visualizar erro:</label>
+        <select onchange="renderError(this.value)">
+            <option value="404">404 — Não encontrada</option>
+            <option value="500">500 — Erro interno</option>
+            <option value="403">403 — Acesso negado</option>
+        </select>
+    </div>
+    <script>
+        const errors = {
+            '404':{code:'404',codeFrom:'#6366f1',codeTo:'#818cf8',iconBg:'rgba(99,102,241,.1)',iconColor:'#6366f1',icon:'fa-compass',blobA:'rgba(99,102,241,.15)',blobB:'rgba(129,140,248,.1)',title:'Página não encontrada',msg:'Ops! A página que você está procurando não existe ou foi movida para outro endereço.',suggestions:['Verifique se o endereço foi digitado corretamente','Volte para a página inicial e navegue pelo menu','Use o botão voltar do navegador','Entre em contato se o problema persistir'],actions:[{label:'Ir para o início',icon:'fa-house',href:'/',primary:true},{label:'Voltar',icon:'fa-arrow-left',href:'javascript:history.back()',primary:false}]},
+            '500':{code:'500',codeFrom:'#f43f5e',codeTo:'#fb7185',iconBg:'rgba(244,63,94,.1)',iconColor:'#f43f5e',icon:'fa-triangle-exclamation',blobA:'rgba(244,63,94,.12)',blobB:'rgba(251,113,133,.08)',title:'Erro interno do servidor',msg:'Algo deu errado no nosso lado. Nossa equipe já foi notificada e está trabalhando para resolver o problema.',suggestions:['Aguarde alguns instantes e tente novamente','Recarregue a página pressionando F5','Limpe o cache do navegador se o erro persistir','Nossa equipe técnica já foi avisada automaticamente'],actions:[{label:'Recarregar',icon:'fa-rotate-right',href:'javascript:location.reload()',primary:true},{label:'Página inicial',icon:'fa-house',href:'/',primary:false}]},
+            '403':{code:'403',codeFrom:'#f59e0b',codeTo:'#fbbf24',iconBg:'rgba(245,158,11,.1)',iconColor:'#f59e0b',icon:'fa-shield-halved',blobA:'rgba(245,158,11,.12)',blobB:'rgba(251,191,36,.08)',title:'Acesso negado',msg:'Você não tem permissão para acessar esta página. Faça login com uma conta autorizada.',suggestions:['Verifique se você está logado na conta correta','Confirme se você tem as permissões necessárias','Tente fazer logout e login novamente','Entre em contato com o suporte se precisar de acesso'],actions:[{label:'Fazer login',icon:'fa-right-to-bracket',href:'/login',primary:true},{label:'Página inicial',icon:'fa-house',href:'/',primary:false}]}
+        };
+        function renderError(code){
+            const e=errors[code]||errors['404'];
+            const card=document.getElementById('errorCard');
+            document.getElementById('bgBlobs').innerHTML=`<div class="blob" style="width:500px;height:500px;top:-150px;right:-200px;background:${e.blobA};"></div><div class="blob" style="width:350px;height:350px;bottom:-100px;left:-150px;background:${e.blobB};"></div>`;
+            const suggs=e.suggestions.map(s=>`<li><i class="fas fa-chevron-right"></i>${s}</li>`).join('');
+            const acts=e.actions.map(a=>`<a href="${a.href}" class="btn-err ${a.primary?'btn-err-primary':'btn-err-ghost'}"><i class="fas ${a.icon}"></i>${a.label}</a>`).join('');
+            card.innerHTML=`<div class="error-icon-wrap" style="background:${e.iconBg};"><i class="fas ${e.icon}" style="color:${e.iconColor};font-size:inherit;"></i></div><div class="error-code" style="--code-from:${e.codeFrom};--code-to:${e.codeTo};">${e.code}</div><h1 class="error-title">${e.title}</h1><p class="error-msg">${e.msg}</p><div class="suggestions-box"><div class="suggestions-title"><i class="fas fa-lightbulb" style="color:${e.iconColor};"></i>O que você pode fazer</div><ul class="suggestions-list">${suggs}</ul></div><div class="error-actions">${acts}</div>`;
+            card.style.animation='none';void card.offsetHeight;card.style.animation='cardIn .45s cubic-bezier(.34,1.56,.64,1)';
+        }
+        document.addEventListener('DOMContentLoaded',()=>renderError('404'));
+    </script>
+</body>
+</html>

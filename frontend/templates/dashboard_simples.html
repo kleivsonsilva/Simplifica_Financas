@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Minhas Finanças — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .simples-saldo {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .simples-saldo::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -80px;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(99,102,241,.3) 0%, transparent 65%);
+        pointer-events: none;
+    }
+    .simples-saldo-label {
+        font-size: .875rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .08em;
+        opacity: .5; margin-bottom: .75rem;
+    }
+    .simples-saldo-value {
+        font-size: clamp(2.75rem, 7vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -.05em;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        margin-bottom: 1rem;
+    }
+    .simples-saldo-status {
+        display: inline-flex; align-items: center; gap: .4rem;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: var(--radius-full);
+        padding: .375rem .875rem;
+        font-size: .875rem; font-weight: 600;
+        backdrop-filter: blur(6px);
+    }
+    .simples-saldo-status.positivo { border-color: rgba(16,185,129,.4); color: #6ee7b7; }
+    .simples-saldo-status.negativo { border-color: rgba(244,63,94,.4); color: #fda4af; }
+
+    .simples-stat {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        padding: 1.75rem;
+        text-align: center;
+        height: 100%;
+    }
+    .simples-stat-icon {
+        width: 52px; height: 52px;
+        border-radius: var(--radius-lg);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem;
+        margin: 0 auto .875rem;
+    }
+    .simples-stat-label { font-size: .8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--brand-500); margin-bottom: .375rem; }
+    .simples-stat-value { font-size: 1.75rem; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+
+    .big-btn {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: .75rem; padding: 2rem 1.5rem;
+        border-radius: var(--radius-xl);
+        font-size: 1.0625rem; font-weight: 700;
+        text-decoration: none;
+        transition: all .25s;
+        border: none; cursor: pointer;
+        min-height: 130px;
+    }
+    .big-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .big-btn-icon { font-size: 1.75rem; }
+    .big-btn-primary { background: linear-gradient(135deg, var(--accent-dark), var(--accent)); color: white; }
+    .big-btn-success { background: linear-gradient(135deg, #059669, var(--success)); color: white; }
+    .big-btn-outline {
+        background: white; color: var(--brand-700);
+        border: 2px solid var(--brand-100);
+    }
+    .big-btn-outline:hover { border-color: var(--brand-300); color: var(--brand-800); }
+
+    .dica-card {
+        background: linear-gradient(135deg, rgba(99,102,241,.06), rgba(99,102,241,.02));
+        border: 1px solid rgba(99,102,241,.15);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+    }
+
+    @media (max-width: 576px) {
+        .simples-saldo { padding: 1.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modo-simples">
+
+    <!-- Saudação -->
+    <div class="mb-4">
+        <h1 class="fw-800" style="font-size:1.75rem;letter-spacing:-.03em;">
+            Olá, {{ session.get('usuario', {}).get('nome', '').split()[0] }}! 👋
+        </h1>
+        <p style="color:var(--brand-500);margin-bottom:0;">Aqui está um resumo das suas finanças</p>
+    </div>
+
+    <!-- Saldo Principal -->
+    <div class="simples-saldo">
+        <div class="simples-saldo-label"><i class="fas fa-wallet me-2"></i>Saldo Atual</div>
+        <div class="simples-saldo-value">
+            R$ {{ "%.2f"|format(saldo.saldo)|replace('.', ',') }}
+        </div>
+        <div class="simples-saldo-status {% if saldo.saldo >= 0 %}positivo{% else %}negativo{% endif %}">
+            {% if saldo.saldo >= 0 %}
+                <i class="fas fa-arrow-up"></i>Você está no positivo!
+            {% else %}
+                <i class="fas fa-exclamation-triangle"></i>Saldo negativo — atenção!
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Receitas e Despesas -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="simples-stat">
+                <div class="simples-stat-icon" style="background:var(--success-light);">
+                    <i class="fas fa-arrow-down" style="color:var(--success);"></i>
+                </div>
+                <div class="simples-stat-label">Recebi este mês</div>
+                <div class="simples-stat-value" style="color:var(--success);">
+                    R$ {{ "%.2f"|format(saldo.receitas)|replace('.', ',') }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="simples-stat">
+                <div class="simples-stat-icon" style="background:var(--danger-light);">
+                    <i class="fas fa-arrow-up" style="color:var(--danger);"></i>
+                </div>
+                <div class="simples-stat-label">Gastei este mês</div>
+                <div class="simples-stat-value" style="color:var(--danger);">
+                    R$ {{ "%.2f"|format(saldo.despesas)|replace('.', ',') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6">
+            <a href="{{ url_for('adicionar_transacao') }}" class="big-btn big-btn-primary w-100">
+                <span class="big-btn-icon"><i class="fas fa-plus-circle"></i></span>
+                <span>Adicionar Movimentação</span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6">
+            <a href="{{ url_for('metas') }}" class="big-btn big-btn-success w-100">
+                <span class="big-btn-icon"><i class="fas fa-bullseye"></i></span>
+                <span>Ver Minhas Metas</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Exportar -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <a href="{{ url_for('exportar_pdf') }}" class="big-btn big-btn-outline w-100" style="min-height:80px;padding:1.25rem;">
+                <i class="fas fa-file-pdf fa-lg" style="color:var(--danger);"></i>
+                <span style="font-size:.9375rem;">Exportar PDF</span>
+            </a>
+        </div>
+        <div class="col-6">
+            <a href="{{ url_for('exportar_excel') }}" class="big-btn big-btn-outline w-100" style="min-height:80px;padding:1.25rem;">
+                <i class="fas fa-file-excel fa-lg" style="color:var(--success);"></i>
+                <span style="font-size:.9375rem;">Exportar Excel</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Últimas Movimentações -->
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <span><i class="fas fa-list me-2" style="color:var(--accent-dark);"></i>Últimas Movimentações</span>
+            <a href="{{ url_for('adicionar_transacao') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i><span class="d-none d-sm-inline ms-1">Adicionar</span>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if transacoes %}
+                {% for t in transacoes %}
+                <div class="transacao-item">
+                    <div class="transacao-icon {{ t.tipo }}">
+                        <i class="fas fa-arrow-{% if t.tipo == 'receita' %}down{% else %}up{% endif %}"></i>
+                    </div>
+                    <div class="transacao-info">
+                        <div class="transacao-desc">{{ t.descricao }}</div>
+                        <div class="transacao-meta">
+                            {{ t.data[8:10] }}/{{ t.data[5:7] }}/{{ t.data[0:4] }}
+                            &nbsp;·&nbsp;
+                            <span class="badge badge-{% if t.tipo == 'receita' %}success{% else %}danger{% endif %}">{{ t.categoria }}</span>
+                        </div>
+                    </div>
+                    <div class="transacao-value {{ t.tipo }}">
+                        {% if t.tipo == 'receita' %}+{% else %}−{% endif %}R$ {{ "%.2f"|format(t.valor)|replace('.', ',') }}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger ms-2"
+                            onclick="confirmarExclusao('{{ url_for('excluir_transacao', id=t.id) }}','Excluir movimentação','Deseja remover &quot;{{ t.descricao }}&quot;? Esta ação não pode ser desfeita.')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                    <h5>Nenhuma movimentação ainda</h5>
+                    <p>Comece registrando sua primeira receita ou despesa.</p>
+                    <a href="{{ url_for('adicionar_transacao') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>Adicionar a Primeira
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Dica do Dia -->
+    <div class="dica-card">
+        <div class="d-flex align-items-start gap-3">
+            <div style="width:40px;height:40px;background:var(--accent-glow);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--accent-dark);flex-shrink:0;">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div>
+                <h6 class="fw-700 mb-1" style="color:var(--accent-dark);">Dica Financeira</h6>
+                <p class="mb-0" style="font-size:.9375rem;color:var(--brand-700);">
+                    Registre suas movimentações diariamente! Pequenos gastos esquecidos podem comprometer seu orçamento no final do mês.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Configurações — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-section {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+    }
+    .settings-section-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--brand-100);
+        display: flex; align-items: center; gap: .75rem;
+    }
+    .settings-section-icon {
+        width: 36px; height: 36px; border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: .875rem; flex-shrink: 0;
+    }
+    .settings-section-title { font-size: .9375rem; font-weight: 700; color: var(--brand-800); }
+    .settings-section-sub   { font-size: .8125rem; color: var(--brand-500); margin-top: .1rem; }
+    .settings-body { padding: 1.5rem; }
+
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .mode-opt  { position: relative; }
+    .mode-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .mode-opt-label {
+        display: block; border: 2px solid var(--brand-100);
+        border-radius: var(--radius-lg); padding: 1.5rem;
+        cursor: pointer; transition: all .2s; height: 100%;
+    }
+    .mode-opt-label:hover { border-color: var(--brand-300); }
+    .mode-opt input:checked + .mode-opt-label { border-color: var(--accent); background: var(--accent-glow); }
+
+    .mode-opt-icon {
+        width: 48px; height: 48px; border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; margin-bottom: 1rem; transition: all .2s;
+        background: var(--brand-100); color: var(--brand-500);
+    }
+    .mode-opt input:checked + .mode-opt-label .icon-simples  { background: rgba(16,185,129,.15); color: var(--success); }
+    .mode-opt input:checked + .mode-opt-label .icon-avancado { background: var(--accent-glow); color: var(--accent-dark); }
+
+    .mode-opt-name { font-weight: 700; font-size: 1rem; color: var(--brand-900); margin-bottom: .375rem; }
+    .mode-opt-desc { font-size: .8125rem; color: var(--brand-500); line-height: 1.5; }
+    .mode-opt-features { list-style:none; padding:0; margin:.75rem 0 0; display:flex; flex-direction:column; gap:.35rem; }
+    .mode-opt-features li { font-size:.78rem; color:var(--brand-700); display:flex; align-items:center; gap:.4rem; }
+    .mode-opt-features li i { font-size:.65rem; color:var(--success); }
+
+    .info-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: .875rem 0; border-bottom: 1px solid var(--brand-50);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size:.8125rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--brand-500); }
+    .info-value { font-size:.9375rem; font-weight:600; color:var(--brand-800); }
+
+    .danger-row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--brand-50);
+    }
+    .danger-row:last-child { border-bottom: none; }
+    .danger-row h6 { font-size:.9375rem; font-weight:700; margin-bottom:.2rem; }
+    .danger-row p  { font-size:.8125rem; color:var(--brand-500); margin:0; }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position:absolute; left:.875rem; top:50%; transform:translateY(-50%);
+        color:var(--brand-500); font-size:.875rem; pointer-events:none;
+    }
+    .input-with-icon .form-control { padding-left: 2.5rem; }
+    .input-with-icon .has-toggle   { padding-right: 2.75rem; }
+    .input-with-icon .input-toggle {
+        position:absolute; right:.875rem; top:50%; transform:translateY(-50%);
+        background:none; border:none; color:var(--brand-500); cursor:pointer; font-size:.875rem; padding:0;
+    }
+
+    @media(max-width:576px) {
+        .mode-grid { grid-template-columns: 1fr; }
+        .danger-row { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <div class="mb-4">
+            <h1 class="fw-800 mb-1" style="font-size:1.625rem;letter-spacing:-.03em;">
+                <i class="fas fa-sliders me-2" style="color:var(--accent-dark);font-size:1.2rem;"></i>Configurações
+            </h1>
+            <p style="color:var(--brand-500);margin:0;">Personalize sua experiência no Simplifica</p>
+        </div>
+
+        <!-- Conta -->
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <div class="settings-section-icon" style="background:var(--accent-glow);color:var(--accent-dark);"><i class="fas fa-user"></i></div>
+                <div>
+                    <div class="settings-section-title">Informações da Conta</div>
+                    <div class="settings-section-sub">Dados do seu perfil</div>
+                </div>
+            </div>
+            <div class="settings-body">
+                <div class="info-row">
+                    <span class="info-label">Nome</span>
+                    <span class="info-value">{{ session.get('usuario', {}).get('nome', '') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Modo Atual</span>
+                    {% if session.get('usuario', {}).get('modo_interface', 'simples') == 'simples' %}
+                        <span class="badge" style="background:rgba(16,185,129,.12);color:#065f46;font-size:.8rem;padding:.4rem .8rem;">
+                            <i class="fas fa-smile me-1"></i>Modo Simples
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background:var(--accent-glow);color:var(--accent-dark);font-size:.8rem;padding:.4rem .8rem;">
+                            <i class="fas fa-chart-line me-1"></i>Modo Avançado
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Senha</span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="abrirAlterarSenha()">
+                        <i class="fas fa-lock"></i>Alterar Senha
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modo de Interface -->
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <div class="settings-section-icon" style="background:var(--warning-light);color:var(--warning);"><i class="fas fa-desktop"></i></div>
+                <div>
+                    <div class="settings-section-title">Modo de Interface</div>
+                    <div class="settings-section-sub">Escolha a experiência que melhor se adapta a você</div>
+                </div>
+            </div>
+            <div class="settings-body">
+                <form method="POST" action="{{ url_for('configuracoes') }}">
+                    <div class="mode-grid mb-4">
+                        <!-- Simples -->
+                        <div class="mode-opt">
+                            <input type="radio" name="modo" id="modo_simples" value="simples"
+                                   {% if session.get('usuario', {}).get('modo_interface', 'simples') == 'simples' %}checked{% endif %}>
+                            <label class="mode-opt-label" for="modo_simples">
+                                <div class="mode-opt-icon icon-simples"><i class="fas fa-smile"></i></div>
+                                <div class="mode-opt-name">Modo Simples</div>
+                                <div class="mode-opt-desc">Interface clara e intuitiva para o dia a dia</div>
+                                <ul class="mode-opt-features">
+                                    <li><i class="fas fa-check-circle"></i>Botões grandes e visíveis</li>
+                                    <li><i class="fas fa-check-circle"></i>Foco no essencial</li>
+                                    <li><i class="fas fa-check-circle"></i>Ideal para iniciantes</li>
+                                </ul>
+                            </label>
+                        </div>
+                        <!-- Avançado -->
+                        <div class="mode-opt">
+                            <input type="radio" name="modo" id="modo_avancado" value="avancado"
+                                   {% if session.get('usuario', {}).get('modo_interface', 'simples') == 'avancado' %}checked{% endif %}>
+                            <label class="mode-opt-label" for="modo_avancado">
+                                <div class="mode-opt-icon icon-avancado"><i class="fas fa-chart-line"></i></div>
+                                <div class="mode-opt-name">Modo Avançado</div>
+                                <div class="mode-opt-desc">Dashboard completo com análises e gráficos</div>
+                                <ul class="mode-opt-features">
+                                    <li><i class="fas fa-check-circle"></i>Gráficos interativos</li>
+                                    <li><i class="fas fa-check-circle"></i>Relatórios detalhados</li>
+                                    <li><i class="fas fa-check-circle"></i>Análise por categoria</li>
+                                </ul>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>Salvar Modo
+                        </button>
+                        <p class="mb-0" style="font-size:.8125rem;color:var(--brand-500);">
+                            <i class="fas fa-info-circle me-1"></i>Seus dados são mantidos em qualquer modo.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Exportação -->
+        <div class="settings-section">
+            <div class="settings-section-header">
+                <div class="settings-section-icon" style="background:var(--success-light);color:var(--success);"><i class="fas fa-file-export"></i></div>
+                <div>
+                    <div class="settings-section-title">Exportar Dados</div>
+                    <div class="settings-section-sub">Baixe suas movimentações em diferentes formatos</div>
+                </div>
+            </div>
+            <div class="settings-body">
+                <div class="danger-row">
+                    <div><h6>Exportar em PDF</h6><p>Relatório completo das suas movimentações</p></div>
+                    <a href="{{ url_for('exportar_pdf') }}" class="btn btn-outline-danger btn-sm" style="flex-shrink:0;">
+                        <i class="fas fa-file-pdf"></i>Baixar PDF
+                    </a>
+                </div>
+                <div class="danger-row">
+                    <div><h6>Exportar em Excel</h6><p>Planilha com todos os dados para análise</p></div>
+                    <a href="{{ url_for('exportar_excel') }}" class="btn btn-outline-success btn-sm" style="flex-shrink:0;">
+                        <i class="fas fa-file-excel"></i>Baixar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zona de Perigo -->
+        <div class="settings-section" style="border-color:rgba(244,63,94,.2);">
+            <div class="settings-section-header" style="background:rgba(244,63,94,.04);">
+                <div class="settings-section-icon" style="background:var(--danger-light);color:var(--danger);"><i class="fas fa-exclamation-triangle"></i></div>
+                <div>
+                    <div class="settings-section-title" style="color:var(--danger);">Zona de Perigo</div>
+                    <div class="settings-section-sub">Ações sensíveis — prossiga com cuidado</div>
+                </div>
+            </div>
+            <div class="settings-body">
+                <div class="danger-row">
+                    <div><h6>Sair da Conta</h6><p>Encerrar sua sessão atual no sistema</p></div>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm" style="flex-shrink:0;">
+                        <i class="fas fa-sign-out-alt"></i>Sair
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-2">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>Voltar ao Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Alterar Senha -->
+<div class="modal fade" id="alterarSenhaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0"><i class="fas fa-lock me-2" style="color:var(--accent-dark);"></i>Alterar Senha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formAlterarSenha" method="POST" action="/api/auth/alterar-senha">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Senha Atual</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" name="senha_atual" id="senhaAtual" class="form-control has-toggle" placeholder="Sua senha atual" required>
+                            <button type="button" class="input-toggle" onclick="toggleSenha('senhaAtual','iconAtual')" tabindex="-1">
+                                <i class="fas fa-eye" id="iconAtual"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" name="nova_senha" id="novaSenha" class="form-control has-toggle"
+                                   placeholder="Mínimo 8 caracteres" required minlength="8" oninput="avaliarForca(this.value)">
+                            <button type="button" class="input-toggle" onclick="toggleSenha('novaSenha','iconNova')" tabindex="-1">
+                                <i class="fas fa-eye" id="iconNova"></i>
+                            </button>
+                        </div>
+                        <div id="strengthWrap" style="display:none;margin-top:.5rem;">
+                            <div style="display:flex;gap:4px;margin-bottom:.3rem;">
+                                <div id="sb1" style="flex:1;height:4px;background:var(--brand-100);border-radius:2px;transition:background .3s;"></div>
+                                <div id="sb2" style="flex:1;height:4px;background:var(--brand-100);border-radius:2px;transition:background .3s;"></div>
+                                <div id="sb3" style="flex:1;height:4px;background:var(--brand-100);border-radius:2px;transition:background .3s;"></div>
+                                <div id="sb4" style="flex:1;height:4px;background:var(--brand-100);border-radius:2px;transition:background .3s;"></div>
+                            </div>
+                            <span id="sLabel" style="font-size:.75rem;font-weight:600;"></span>
+                        </div>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label">Confirmar Nova Senha</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" name="confirmar_nova" id="confirmarNova" class="form-control has-toggle"
+                                   placeholder="Repita a nova senha" required oninput="checkMatch()">
+                            <button type="button" class="input-toggle" onclick="toggleSenha('confirmarNova','iconC')" tabindex="-1">
+                                <i class="fas fa-eye" id="iconC"></i>
+                            </button>
+                        </div>
+                        <div id="matchMsg" style="font-size:.75rem;margin-top:.375rem;display:none;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i>Salvar Senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function abrirAlterarSenha() {
+        new bootstrap.Modal(document.getElementById('alterarSenhaModal')).show();
+    }
+    function toggleSenha(id, iconId) {
+        const el = document.getElementById(id), ic = document.getElementById(iconId);
+        el.type = el.type === 'password' ? 'text' : 'password';
+        ic.className = el.type === 'text' ? 'fas fa-eye-slash' : 'fas fa-eye';
+    }
+    function avaliarForca(v) {
+        const wrap = document.getElementById('strengthWrap');
+        if (!v) { wrap.style.display='none'; return; }
+        wrap.style.display = 'block';
+        const score = [v.length>=8,/[A-Z]/.test(v),/\d/.test(v),/[^A-Za-z0-9]/.test(v)].filter(Boolean).length;
+        const colors = {1:'var(--danger)',2:'var(--warning)',3:'var(--info)',4:'var(--success)'};
+        const labels = {1:'Fraca',2:'Regular',3:'Boa',4:'Forte'};
+        for (let i=1;i<=4;i++) document.getElementById('sb'+i).style.background = i<=score ? colors[score] : 'var(--brand-100)';
+        const lbl = document.getElementById('sLabel');
+        lbl.textContent = labels[score]||'';
+        lbl.style.color = colors[score]||'var(--brand-500)';
+    }
+    function checkMatch() {
+        const nova=document.getElementById('novaSenha').value, conf=document.getElementById('confirmarNova').value;
+        const msg=document.getElementById('matchMsg');
+        if (!conf) { msg.style.display='none'; return; }
+        msg.style.display='block';
+        msg.textContent = nova===conf ? '✓ Senhas coincidem' : '✗ Senhas não coincidem';
+        msg.style.color = nova===conf ? 'var(--success)' : 'var(--danger)';
+    }
+    document.getElementById('formAlterarSenha').addEventListener('submit', function(e) {
+        if (document.getElementById('novaSenha').value !== document.getElementById('confirmarNova').value) {
+            e.preventDefault();
+            document.getElementById('matchMsg').textContent='✗ Senhas não coincidem';
+            document.getElementById('matchMsg').style.color='var(--danger)';
+            document.getElementById('matchMsg').style.display='block';
+        }
+    });
+</script>
+{% endblock %}

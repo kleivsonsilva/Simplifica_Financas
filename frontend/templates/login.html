@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Simplifica Finanças{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-wrapper {
+        min-height: calc(100vh - var(--nav-height) - 200px);
+        display: flex;
+        align-items: center;
+    }
+
+    .auth-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 440px;
+        margin: 0 auto;
+    }
+
+    .auth-logo {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-title { font-size: 1.625rem; font-weight: 800; color: var(--brand-900); letter-spacing: -.03em; margin-bottom: .375rem; }
+    .auth-sub   { font-size: .9375rem; color: var(--brand-500); margin-bottom: 2rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position: absolute;
+        left: .875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-500);
+        font-size: .875rem;
+        pointer-events: none;
+    }
+    .input-with-icon .form-control { padding-left: 2.5rem; }
+
+    .input-with-icon .input-toggle {
+        position: absolute;
+        right: .875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-500);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        font-size: .875rem;
+        transition: color .2s;
+    }
+    .input-with-icon .input-toggle:hover { color: var(--brand-800); }
+    .input-with-icon .form-control.has-toggle { padding-right: 2.75rem; }
+
+    .password-strength { margin-top: .5rem; }
+    .strength-bar-track { height: 4px; background: var(--brand-100); border-radius: 2px; margin-bottom: .375rem; overflow: hidden; }
+    .strength-bar-fill  { height: 100%; border-radius: 2px; transition: width .3s, background .3s; width: 0; }
+    .strength-label     { font-size: .75rem; font-weight: 600; }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        margin: 1.5rem 0;
+        color: var(--brand-500);
+        font-size: .8125rem;
+    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--brand-100); }
+
+    .auth-link { color: var(--accent-dark); font-weight: 600; text-decoration: none; }
+    .auth-link:hover { color: var(--accent); text-decoration: underline; }
+
+    /* Forgot password modal */
+    .modal-step { display: none; }
+    .modal-step.active { display: block; animation: fadeStep .25s ease; }
+    @keyframes fadeStep { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    .success-circle {
+        width: 64px;
+        height: 64px;
+        background: var(--success-light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        color: var(--success);
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="col-12">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fas fa-wave-square"></i>
+            </div>
+            <h1 class="auth-title">Bem-vindo de volta</h1>
+            <p class="auth-sub">Entre na sua conta para continuar</p>
+
+            <form method="POST" action="{{ url_for('login') }}" id="loginForm" novalidate>
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="email">E-mail</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="seu@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <!-- Senha -->
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label mb-0" for="senha">Senha</label>
+                        <button type="button" class="auth-link border-0 bg-transparent p-0" style="font-size:.8125rem;"
+                                onclick="abrirForgotPassword()">
+                            Esqueci minha senha
+                        </button>
+                    </div>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control has-toggle" id="senha" name="senha"
+                               placeholder="Sua senha" required autocomplete="current-password">
+                        <button type="button" class="input-toggle" onclick="toggleSenha('senha','iconSenha')" tabindex="-1">
+                            <i class="fas fa-eye" id="iconSenha"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-lg mt-1">
+                    <i class="fas fa-sign-in-alt"></i>Entrar
+                </button>
+            </form>
+
+            <div class="divider">ou</div>
+
+            <p class="text-center mb-0" style="font-size:.9375rem;">
+                Não tem conta?
+                <a href="{{ url_for('registro') }}" class="auth-link">Criar conta grátis</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ FORGOT PASSWORD MODAL ════════════════════════ -->
+<div class="modal fade" id="forgotModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0" id="forgotModalTitle">Recuperar senha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+
+                <!-- Step 1: Email -->
+                <div class="modal-step active" id="stepEmail">
+                    <p class="text-brand-500 mb-4" style="font-size:.9375rem;">
+                        Informe seu e-mail cadastrado e enviaremos as instruções para redefinir sua senha.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">E-mail cadastrado</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" class="form-control" id="forgotEmail" placeholder="seu@email.com">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="enviarRecuperacao()">
+                        <i class="fas fa-paper-plane"></i>Enviar instruções
+                    </button>
+                </div>
+
+                <!-- Step 2: Success -->
+                <div class="modal-step" id="stepSuccess">
+                    <div class="success-circle">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="text-center">
+                        <h5 class="fw-700 mb-2">E-mail enviado!</h5>
+                        <p class="text-brand-500 mb-4" style="font-size:.9375rem;">
+                            Verifique sua caixa de entrada em <strong id="sentToEmail"></strong> e siga as instruções para redefinir sua senha.
+                        </p>
+                        <p style="font-size:.8125rem;color:var(--brand-500);">
+                            Não encontrou? Verifique a pasta de spam.
+                        </p>
+                        <button class="btn btn-outline-secondary w-100 mt-2" data-bs-dismiss="modal">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleSenha(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon  = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    function abrirForgotPassword() {
+        document.getElementById('stepEmail').classList.add('active');
+        document.getElementById('stepSuccess').classList.remove('active');
+        document.getElementById('forgotEmail').value = document.getElementById('email').value || '';
+        new bootstrap.Modal(document.getElementById('forgotModal')).show();
+    }
+
+    function enviarRecuperacao() {
+        const emailInput = document.getElementById('forgotEmail');
+        const email = emailInput.value.trim();
+        if (!email || !email.includes('@')) {
+            emailInput.classList.add('is-invalid');
+            emailInput.focus();
+            return;
+        }
+        emailInput.classList.remove('is-invalid');
+
+        // Simulate sending (connect to your backend endpoint)
+        fetch('/api/auth/recuperar-senha', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email })
+        }).catch(() => {});
+
+        document.getElementById('sentToEmail').textContent = email;
+        document.getElementById('stepEmail').classList.remove('active');
+        document.getElementById('stepSuccess').classList.add('active');
+    }
+
+    // Form validation visual
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const email = document.getElementById('email');
+        const senha = document.getElementById('senha');
+        let valid = true;
+
+        [email, senha].forEach(el => {
+            if (!el.value.trim()) {
+                el.classList.add('is-invalid');
+                valid = false;
+            } else {
+                el.classList.remove('is-invalid');
+            }
+        });
+
+        if (!valid) e.preventDefault();
+    });
+
+    // Remove invalid on input
+    document.querySelectorAll('.form-control').forEach(el => {
+        el.addEventListener('input', () => el.classList.remove('is-invalid'));
+    });
+</script>
+{% endblock %}

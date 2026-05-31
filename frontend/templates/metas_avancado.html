@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% block title %}Minhas Metas — Simplifica{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meta-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        padding: 1.75rem;
+        height: 100%;
+        transition: box-shadow .2s;
+    }
+    .meta-card:hover { box-shadow: var(--shadow-md); }
+
+    .meta-icon {
+        width: 48px; height: 48px;
+        border-radius: var(--radius-lg);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-titulo { font-size: 1.125rem; font-weight: 700; color: var(--brand-800); margin-bottom: .25rem; }
+    .meta-prazo  { font-size: .8rem; color: var(--brand-500); margin-bottom: 1rem; display:flex;align-items:center;gap:.3rem; }
+
+    .meta-values {
+        display: flex; justify-content: space-between; align-items: flex-end;
+        margin-bottom: .5rem;
+    }
+    .meta-atual { font-size: 1.5rem; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .meta-alvo  { font-size: .8125rem; color: var(--brand-500); }
+
+    .meta-progress-track {
+        height: 10px;
+        background: var(--brand-100);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        margin-bottom: .5rem;
+    }
+    .meta-progress-bar {
+        height: 100%;
+        border-radius: var(--radius-full);
+        transition: width .6s cubic-bezier(.4,0,.2,1);
+        position: relative;
+    }
+    .meta-progress-bar::after {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(90deg, rgba(255,255,255,.0) 0%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.0) 100%);
+    }
+
+    .meta-pct { font-size: .8125rem; font-weight: 700; }
+    .meta-status {
+        display: inline-flex; align-items: center; gap: .3rem;
+        font-size: .75rem; font-weight: 600;
+        padding: .25rem .625rem;
+        border-radius: var(--radius-full);
+    }
+
+    .meta-actions { display: flex; gap: .5rem; margin-top: 1.25rem; }
+
+    /* Modal deposito */
+    .deposito-meta-nome {
+        font-weight: 700; font-size: 1rem; color: var(--brand-800);
+    }
+    .deposito-progress-mini {
+        height: 6px; background: var(--brand-100); border-radius: 3px;
+        overflow: hidden; margin: .75rem 0;
+    }
+    .deposito-progress-fill {
+        height: 100%; border-radius: 3px; transition: width .4s;
+    }
+
+    .novo-meta-card {
+        background: white;
+        border: 2px dashed var(--brand-200, #e2e8f0);
+        border-radius: var(--radius-xl);
+        padding: 1.75rem;
+    }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position: absolute; left: .875rem; top: 50%;
+        transform: translateY(-50%);
+        color: var(--brand-500); font-size: .875rem; pointer-events: none;
+    }
+    .input-with-icon .form-control,
+    .input-with-icon .form-select { padding-left: 2.5rem; }
+
+    .color-row { display: flex; gap: .625rem; flex-wrap: wrap; margin-top: .5rem; }
+    .color-opt { position: relative; }
+    .color-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .color-swatch {
+        width: 30px; height: 30px; border-radius: 50%;
+        cursor: pointer; transition: transform .15s, box-shadow .15s;
+        border: 3px solid transparent;
+    }
+    .color-opt input:checked + .color-swatch { transform: scale(1.25); box-shadow: 0 0 0 2px white, 0 0 0 4px currentColor; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modo-simples">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="fw-800 mb-1" style="font-size:1.75rem;letter-spacing:-.03em;">Minhas Metas</h1>
+            <p style="color:var(--brand-500);margin:0;">Acompanhe seus objetivos financeiros</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#formNovaMetaWrapper">
+            <i class="fas fa-plus"></i>Nova Meta
+        </button>
+    </div>
+
+    <!-- ═══ FORM NOVA META (COLLAPSIBLE) ════════════════ -->
+    <div class="collapse {% if not metas %}show{% endif %}" id="formNovaMetaWrapper">
+        <div class="novo-meta-card mb-4">
+            <h5 class="fw-700 mb-4"><i class="fas fa-bullseye me-2" style="color:var(--accent-dark);"></i>Criar Nova Meta</h5>
+            <form method="POST" action="{{ url_for('metas') }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nome da Meta</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-tag input-icon"></i>
+                            <input type="text" name="titulo" class="form-control form-control-lg"
+                                   placeholder="Ex: Viagem de férias" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Valor Alvo (R$)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text fw-700">R$</span>
+                            <input type="number" name="valor_alvo" class="form-control"
+                                   placeholder="0,00" step="0.01" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" name="data_inicio" class="form-control form-control-lg" required id="dataInicio">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data Limite <span style="color:var(--brand-400,#94a3b8);font-weight:400;">(opcional)</span></label>
+                        <input type="date" name="data_limite" class="form-control form-control-lg">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Cor da Meta</label>
+                        <div class="color-row">
+                            {% for cor, nome in [('#6366f1','Índigo'),('#10b981','Verde'),('#f59e0b','Âmbar'),('#f43f5e','Rosa'),('#0ea5e9','Azul'),('#8b5cf6','Roxo'),('#14b8a6','Teal')] %}
+                            <div class="color-opt">
+                                <input type="radio" name="cor" value="{{ cor }}" id="cor{{ loop.index }}"
+                                       {% if loop.first %}checked{% endif %}>
+                                <label class="color-swatch" for="cor{{ loop.index }}"
+                                       style="background:{{ cor }};color:{{ cor }};border-color:{{ cor }};"></label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-bullseye"></i>Criar Meta
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary"
+                                data-bs-toggle="collapse" data-bs-target="#formNovaMetaWrapper">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ LISTA DE METAS ════════════════════════════ -->
+    {% set lista_metas = metas if metas is iterable and metas is not mapping else [] %}
+
+    {% if lista_metas %}
+        <div class="row g-3">
+        {% for m in lista_metas %}
+            {% set pct = (m.percentual or 0)|float %}
+            {% set cor = m.cor or '#6366f1' %}
+            <div class="col-md-6 col-xl-4">
+                <div class="meta-card">
+                    <!-- Cabeçalho -->
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div class="meta-icon" style="background:{{ cor }}22;">
+                            <i class="fas fa-bullseye" style="color:{{ cor }};"></i>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="meta-status" style="background:{{ cor }}18;color:{{ cor }};">
+                                {{ pct|int }}%
+                            </span>
+                            {% if m.status == 'concluida' %}
+                            <span class="meta-status badge-success">
+                                <i class="fas fa-check"></i>Concluída
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="meta-titulo">{{ m.titulo }}</div>
+
+                    {% if m.data_limite %}
+                    <div class="meta-prazo">
+                        <i class="fas fa-calendar-alt"></i>
+                        Prazo: {{ m.data_limite }}
+                    </div>
+                    {% else %}
+                    <div class="meta-prazo"><i class="fas fa-infinity"></i>Sem prazo definido</div>
+                    {% endif %}
+
+                    <!-- Progresso -->
+                    <div class="meta-values">
+                        <div>
+                            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-500);margin-bottom:.15rem;">Acumulado</div>
+                            <div class="meta-atual" style="color:{{ cor }};">
+                                R$ {{ "%.2f"|format(m.valor_atual|float)|replace('.', ',') }}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-500);margin-bottom:.15rem;">Meta</div>
+                            <div class="meta-alvo" style="font-size:1rem;font-weight:700;">
+                                R$ {{ "%.2f"|format(m.valor_alvo|float)|replace('.', ',') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="meta-progress-track">
+                        <div class="meta-progress-bar"
+                             style="width:{{ [pct, 100]|min }}%;background:{{ cor }};"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="meta-pct" style="color:{{ cor }};">{{ pct|int }}% concluída</span>
+                        <span style="font-size:.78rem;color:var(--brand-500);">
+                            Faltam R$ {{ "%.2f"|format([m.valor_alvo|float - m.valor_atual|float, 0]|max)|replace('.', ',') }}
+                        </span>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="meta-actions">
+                        {% if m.status != 'concluida' %}
+                        <button class="btn btn-primary btn-sm flex-fill"
+                                onclick="abrirDeposito('{{ m.id }}','{{ m.titulo }}',{{ m.valor_atual|float }},{{ m.valor_alvo|float }},'{{ cor }}')">
+                            <i class="fas fa-plus"></i>Depositar
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-outline-secondary btn-sm"
+                                onclick="abrirEditarMeta('{{ m.id }}','{{ m.titulo }}',{{ m.valor_alvo|float }},'{{ m.data_limite or '' }}','{{ cor }}')">
+                            <i class="fas fa-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm"
+                                onclick="confirmarExclusao('{{ url_for('excluir_meta', meta_id=m.id) }}','Excluir meta','Deseja excluir a meta &quot;{{ m.titulo }}&quot;? Esta ação é irreversível.')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body">
+                <div class="empty-state">
+                    <div class="empty-state-icon" style="font-size:2rem;">🎯</div>
+                    <h5>Nenhuma meta criada ainda</h5>
+                    <p>Defina objetivos financeiros e acompanhe seu progresso visualmente.</p>
+                    <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#formNovaMetaWrapper">
+                        <i class="fas fa-plus"></i>Criar Primeira Meta
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ═══ MODAL DEPÓSITO ════════════════════════════════ -->
+<div class="modal fade" id="depositoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0"><i class="fas fa-plus me-2" style="color:var(--success);"></i>Adicionar Valor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formDeposito" method="POST">
+                <div class="modal-body">
+                    <p class="deposito-meta-nome mb-1" id="depositoMetaNome"></p>
+                    <div style="font-size:.8125rem;color:var(--brand-500);" id="depositoMetaInfo"></div>
+                    <div class="deposito-progress-mini">
+                        <div class="deposito-progress-fill" id="depositoProgressBar"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Valor a Depositar (R$)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text fw-700">R$</span>
+                            <input type="number" name="valor" id="depositoValor" class="form-control"
+                                   placeholder="0,00" step="0.01" min="0.01" required
+                                   oninput="previewDeposito()">
+                        </div>
+                    </div>
+
+                    <div id="depositoPreview" style="display:none;background:var(--success-light);border-radius:var(--radius-md);padding:.875rem;font-size:.875rem;">
+                        <div class="d-flex justify-content-between">
+                            <span>Após depósito:</span>
+                            <strong id="depositoNovoValor" style="color:var(--success);"></strong>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>Progresso:</span>
+                            <strong id="depositoNovoPct" style="color:var(--success);"></strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i>Confirmar Depósito
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODAL EDITAR META ════════════════════════════ -->
+<div class="modal fade" id="editarMetaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0"><i class="fas fa-pencil me-2" style="color:var(--accent-dark);"></i>Editar Meta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarMeta" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Meta</label>
+                        <input type="text" name="titulo" id="editTitulo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor Alvo (R$)</label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-700">R$</span>
+                            <input type="number" name="valor_alvo" id="editValorAlvo" class="form-control" step="0.01" min="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data Limite</label>
+                        <input type="date" name="data_limite" id="editDataLimite" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('dataInicio').valueAsDate = new Date();
+
+    let _depositoAtual = {};
+
+    function abrirDeposito(id, titulo, valorAtual, valorAlvo, cor) {
+        _depositoAtual = { id, valorAtual, valorAlvo, cor };
+
+        document.getElementById('depositoMetaNome').textContent = titulo;
+        document.getElementById('depositoMetaInfo').textContent =
+            'R$ ' + valorAtual.toLocaleString('pt-BR',{minimumFractionDigits:2}) +
+            ' de R$ ' + valorAlvo.toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+        const pct = valorAlvo > 0 ? Math.min((valorAtual / valorAlvo) * 100, 100) : 0;
+        const bar = document.getElementById('depositoProgressBar');
+        bar.style.width = pct + '%';
+        bar.style.background = cor;
+
+        document.getElementById('depositoValor').value = '';
+        document.getElementById('depositoPreview').style.display = 'none';
+
+        // Set form action
+        document.getElementById('formDeposito').action = '/metas/' + id + '/deposito';
+
+        new bootstrap.Modal(document.getElementById('depositoModal')).show();
+    }
+
+    function previewDeposito() {
+        const input = document.getElementById('depositoValor');
+        const v = parseFloat(input.value);
+        const preview = document.getElementById('depositoPreview');
+        if (!v || v <= 0) { preview.style.display = 'none'; return; }
+        preview.style.display = 'block';
+
+        const novoValor = _depositoAtual.valorAtual + v;
+        const novoPct   = _depositoAtual.valorAlvo > 0
+            ? Math.min((novoValor / _depositoAtual.valorAlvo) * 100, 100).toFixed(1)
+            : 0;
+
+        document.getElementById('depositoNovoValor').textContent =
+            'R$ ' + novoValor.toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('depositoNovoPct').textContent = novoPct + '%';
+    }
+
+    function abrirEditarMeta(id, titulo, valorAlvo, dataLimite, cor) {
+        document.getElementById('editTitulo').value    = titulo;
+        document.getElementById('editValorAlvo').value = valorAlvo;
+        document.getElementById('editDataLimite').value = dataLimite;
+        document.getElementById('formEditarMeta').action = '/metas/' + id + '/editar';
+        new bootstrap.Modal(document.getElementById('editarMetaModal')).show();
+    }
+</script>
+{% endblock %}

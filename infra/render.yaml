@@ -1,0 +1,177 @@
+# ================================================================
+# RENDER.YAML — Simplifica Finanças
+# Deploy distribuído no Render.com
+#
+# IMPORTANTE: Antes de fazer deploy, crie um "Environment Group"
+# chamado "simplifica-secrets" no painel do Render com:
+#   - JWT_SECRET  (gere com: openssl rand -hex 32)
+#   - MONGO_PASSWORD
+#   - POSTGRES_PASSWORD
+#   - REDIS_PASSWORD
+#   - RABBITMQ_PASS
+# ================================================================
+
+services:
+  # ─── AUTH SERVICE ─────────────────────────────────────────────
+  - type: web
+    name: simplifica-auth
+    runtime: python
+    buildCommand: pip install -r auth-service/requirements.txt
+    startCommand: cd auth-service && gunicorn --bind 0.0.0.0:5001 --workers 2 app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: simplifica-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: simplifica-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: SERVICE_PORT
+        value: "5001"
+
+  # ─── TRANSACTION SERVICE ──────────────────────────────────────
+  - type: web
+    name: simplifica-transactions
+    runtime: python
+    buildCommand: pip install -r transaction-service/requirements.txt
+    startCommand: cd transaction-service && gunicorn --bind 0.0.0.0:5002 --workers 2 app:app
+    envVars:
+      - key: MONGO_URL
+        fromGroup: simplifica-secrets
+      - key: REDIS_URL
+        fromService:
+          name: simplifica-redis
+          type: redis
+          property: connectionString
+      - key: RABBITMQ_URL
+        fromGroup: simplifica-secrets
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: SERVICE_PORT
+        value: "5002"
+
+  # ─── GOAL SERVICE ─────────────────────────────────────────────
+  - type: web
+    name: simplifica-goals
+    runtime: python
+    buildCommand: pip install -r goal-service/requirements.txt
+    startCommand: cd goal-service && gunicorn --bind 0.0.0.0:5003 --workers 2 app:app
+    envVars:
+      - key: MONGO_URL
+        fromGroup: simplifica-secrets
+      - key: RABBITMQ_URL
+        fromGroup: simplifica-secrets
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: SERVICE_PORT
+        value: "5003"
+
+  # ─── REPORT SERVICE ───────────────────────────────────────────
+  - type: web
+    name: simplifica-reports
+    runtime: python
+    buildCommand: pip install -r report-service/requirements.txt
+    startCommand: cd report-service && gunicorn --bind 0.0.0.0:5004 --workers 2 app:app
+    envVars:
+      - key: MONGO_URL
+        fromGroup: simplifica-secrets
+      - key: REDIS_URL
+        fromService:
+          name: simplifica-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: SERVICE_PORT
+        value: "5004"
+
+  # ─── NOTIFICATION SERVICE ─────────────────────────────────────
+  - type: web
+    name: simplifica-notifications
+    runtime: python
+    buildCommand: pip install -r notification-service/requirements.txt
+    startCommand: cd notification-service && gunicorn --bind 0.0.0.0:5005 --workers 2 app:app
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          name: simplifica-redis
+          type: redis
+          property: connectionString
+      - key: RABBITMQ_URL
+        fromGroup: simplifica-secrets
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: SERVICE_PORT
+        value: "5005"
+
+  # ─── API GATEWAY ──────────────────────────────────────────────
+  - type: web
+    name: simplifica-gateway
+    runtime: python
+    buildCommand: pip install -r api-gateway/requirements.txt
+    startCommand: cd api-gateway && gunicorn --bind 0.0.0.0:8000 --workers 2 app:app
+    envVars:
+      - key: AUTH_SERVICE_URL
+        fromService:
+          name: simplifica-auth
+          type: web
+          property: host
+      - key: TRANSACTION_SERVICE_URL
+        fromService:
+          name: simplifica-transactions
+          type: web
+          property: host
+      - key: GOAL_SERVICE_URL
+        fromService:
+          name: simplifica-goals
+          type: web
+          property: host
+      - key: REPORT_SERVICE_URL
+        fromService:
+          name: simplifica-reports
+          type: web
+          property: host
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          name: simplifica-notifications
+          type: web
+          property: host
+      - key: REDIS_URL
+        fromService:
+          name: simplifica-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: GATEWAY_PORT
+        value: "8000"
+
+  # ─── FRONTEND ─────────────────────────────────────────────────
+  - type: web
+    name: simplifica-frontend
+    runtime: python
+    buildCommand: pip install -r frontend/requirements.txt
+    startCommand: cd frontend && gunicorn --bind 0.0.0.0:3000 --workers 2 --timeout 120 app:app
+    envVars:
+      - key: API_GATEWAY_URL
+        fromService:
+          name: simplifica-gateway
+          type: web
+          property: host
+      - key: JWT_SECRET
+        fromGroup: simplifica-secrets
+      - key: FRONTEND_PORT
+        value: "3000"
+
+databases:
+  - name: simplifica-postgres
+    databaseName: simplifica_auth
+    user: admin
+    plan: free
+
+  - name: simplifica-redis
+    plan: free

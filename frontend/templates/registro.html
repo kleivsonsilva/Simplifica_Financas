@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Criar Conta — Simplifica Finanças{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-wrapper { min-height: calc(100vh - var(--nav-height) - 200px); display: flex; align-items: center; }
+
+    .auth-card {
+        background: white;
+        border: 1px solid var(--brand-100);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .auth-logo {
+        width: 52px; height: 52px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        border-radius: var(--radius-lg);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 1.25rem; margin-bottom: 1.5rem;
+    }
+
+    .auth-title { font-size: 1.625rem; font-weight: 800; color: var(--brand-900); letter-spacing: -.03em; margin-bottom: .375rem; }
+    .auth-sub   { font-size: .9375rem; color: var(--brand-500); margin-bottom: 2rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    .input-with-icon { position: relative; }
+    .input-with-icon .input-icon {
+        position: absolute; left: .875rem; top: 50%; transform: translateY(-50%);
+        color: var(--brand-500); font-size: .875rem; pointer-events: none;
+    }
+    .input-with-icon .form-control { padding-left: 2.5rem; }
+    .input-with-icon .input-toggle {
+        position: absolute; right: .875rem; top: 50%; transform: translateY(-50%);
+        color: var(--brand-500); background: none; border: none; cursor: pointer;
+        padding: 0; font-size: .875rem; transition: color .2s;
+    }
+    .input-with-icon .input-toggle:hover { color: var(--brand-800); }
+    .input-with-icon .form-control.has-toggle { padding-right: 2.75rem; }
+
+    /* Password strength */
+    .password-strength { margin-top: .625rem; }
+    .strength-bars { display: flex; gap: 4px; margin-bottom: .375rem; }
+    .strength-bar { flex: 1; height: 4px; background: var(--brand-100); border-radius: 2px; transition: background .3s; }
+    .strength-bar.weak   { background: var(--danger); }
+    .strength-bar.fair   { background: var(--warning); }
+    .strength-bar.good   { background: var(--info); }
+    .strength-bar.strong { background: var(--success); }
+    .strength-label { font-size: .75rem; font-weight: 600; }
+    .strength-label.weak   { color: var(--danger); }
+    .strength-label.fair   { color: var(--warning); }
+    .strength-label.good   { color: var(--info); }
+    .strength-label.strong { color: var(--success); }
+
+    /* Password rules */
+    .pw-rules { display: flex; flex-wrap: wrap; gap: .375rem .75rem; margin-top: .625rem; }
+    .pw-rule {
+        display: flex; align-items: center; gap: .3rem;
+        font-size: .75rem; color: var(--brand-500); font-weight: 500;
+        transition: color .2s;
+    }
+    .pw-rule i { font-size: .65rem; transition: color .2s; }
+    .pw-rule.ok { color: var(--success); }
+    .pw-rule.ok i { color: var(--success); }
+
+    /* Mode selector */
+    .mode-selector { display: grid; grid-template-columns: 1fr 1fr; gap: .875rem; }
+
+    .mode-option { position: relative; }
+    .mode-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .mode-label {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 1.5rem 1rem;
+        border: 2px solid var(--brand-100);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all .2s;
+        text-align: center;
+        height: 100%;
+    }
+    .mode-label:hover { border-color: var(--brand-300); }
+    .mode-option input:checked + .mode-label {
+        border-color: var(--accent);
+        background: var(--accent-glow);
+    }
+
+    .mode-icon {
+        width: 44px; height: 44px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: .875rem;
+        transition: all .2s;
+    }
+
+    .mode-option input:checked + .mode-label .mode-icon-simples {
+        background: rgba(16,185,129,.15); color: var(--success);
+    }
+    .mode-icon-simples { background: var(--brand-100); color: var(--brand-500); }
+
+    .mode-option input:checked + .mode-label .mode-icon-avancado {
+        background: var(--accent-glow); color: var(--accent-dark);
+    }
+    .mode-icon-avancado { background: var(--brand-100); color: var(--brand-500); }
+
+    .mode-name  { font-weight: 700; font-size: .9375rem; color: var(--brand-800); margin-bottom: .25rem; }
+    .mode-desc  { font-size: .775rem; color: var(--brand-500); line-height: 1.4; }
+
+    .divider { display: flex; align-items: center; gap: .75rem; margin: 1.5rem 0; color: var(--brand-500); font-size: .8125rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--brand-100); }
+
+    .auth-link { color: var(--accent-dark); font-weight: 600; text-decoration: none; }
+    .auth-link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper py-4">
+    <div class="col-12">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fas fa-wave-square"></i></div>
+            <h1 class="auth-title">Criar conta grátis</h1>
+            <p class="auth-sub">Comece a organizar suas finanças agora mesmo</p>
+
+            <form method="POST" action="{{ url_for('registro') }}" id="formRegistro" novalidate>
+
+                <!-- Nome -->
+                <div class="form-group">
+                    <label class="form-label" for="nome">Nome completo</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control" id="nome" name="nome"
+                               placeholder="Seu nome completo" required autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="email">E-mail</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="seu@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <!-- Senha -->
+                <div class="form-group">
+                    <label class="form-label" for="senha">Senha</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control has-toggle" id="senha" name="senha"
+                               placeholder="Mínimo 8 caracteres" required minlength="8"
+                               oninput="avaliarSenha(this.value)" autocomplete="new-password">
+                        <button type="button" class="input-toggle" onclick="toggleSenha('senha','iconSenha')" tabindex="-1">
+                            <i class="fas fa-eye" id="iconSenha"></i>
+                        </button>
+                    </div>
+
+                    <div class="password-strength" id="strengthContainer" style="display:none;">
+                        <div class="strength-bars">
+                            <div class="strength-bar" id="bar1"></div>
+                            <div class="strength-bar" id="bar2"></div>
+                            <div class="strength-bar" id="bar3"></div>
+                            <div class="strength-bar" id="bar4"></div>
+                        </div>
+                        <span class="strength-label" id="strengthLabel"></span>
+                    </div>
+
+                    <div class="pw-rules mt-2">
+                        <div class="pw-rule" id="rule-len"><i class="fas fa-circle"></i>8+ caracteres</div>
+                        <div class="pw-rule" id="rule-upper"><i class="fas fa-circle"></i>Maiúscula</div>
+                        <div class="pw-rule" id="rule-num"><i class="fas fa-circle"></i>Número</div>
+                        <div class="pw-rule" id="rule-special"><i class="fas fa-circle"></i>Caractere especial</div>
+                    </div>
+                </div>
+
+                <!-- Confirmar Senha -->
+                <div class="form-group">
+                    <label class="form-label" for="confirmar_senha">Confirmar senha</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control has-toggle" id="confirmar_senha" name="confirmar_senha"
+                               placeholder="Repita a senha" required autocomplete="new-password"
+                               oninput="verificarConfirmacao()">
+                        <button type="button" class="input-toggle" onclick="toggleSenha('confirmar_senha','iconConfirmar')" tabindex="-1">
+                            <i class="fas fa-eye" id="iconConfirmar"></i>
+                        </button>
+                    </div>
+                    <div id="matchMsg" style="font-size:.75rem;margin-top:.375rem;display:none;"></div>
+                </div>
+
+                <!-- Modo -->
+                <div class="form-group">
+                    <label class="form-label">Modo de interface</label>
+                    <div class="mode-selector">
+                        <div class="mode-option">
+                            <input type="radio" name="modo" id="modo_simples" value="simples" checked>
+                            <label class="mode-label" for="modo_simples">
+                                <div class="mode-icon mode-icon-simples"><i class="fas fa-smile"></i></div>
+                                <div class="mode-name">Simples</div>
+                                <div class="mode-desc">Interface clara, botões grandes, essencial</div>
+                            </label>
+                        </div>
+                        <div class="mode-option">
+                            <input type="radio" name="modo" id="modo_avancado" value="avancado">
+                            <label class="mode-label" for="modo_avancado">
+                                <div class="mode-icon mode-icon-avancado"><i class="fas fa-chart-line"></i></div>
+                                <div class="mode-name">Avançado</div>
+                                <div class="mode-desc">Gráficos, relatórios e análises detalhadas</div>
+                            </label>
+                        </div>
+                    </div>
+                    <p style="font-size:.775rem;color:var(--brand-500);margin-top:.625rem;">
+                        <i class="fas fa-info-circle me-1"></i>Você pode mudar o modo nas configurações a qualquer momento.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-lg">
+                    <i class="fas fa-user-plus"></i>Criar minha conta
+                </button>
+            </form>
+
+            <div class="divider">ou</div>
+            <p class="text-center mb-0" style="font-size:.9375rem;">
+                Já tem conta? <a href="{{ url_for('login') }}" class="auth-link">Entrar</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleSenha(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon  = document.getElementById(iconId);
+        input.type  = input.type === 'password' ? 'text' : 'password';
+        icon.className = input.type === 'text' ? 'fas fa-eye-slash' : 'fas fa-eye';
+    }
+
+    function avaliarSenha(v) {
+        const container = document.getElementById('strengthContainer');
+        if (!v) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+
+        const rules = {
+            len:     v.length >= 8,
+            upper:   /[A-Z]/.test(v),
+            num:     /\d/.test(v),
+            special: /[^A-Za-z0-9]/.test(v)
+        };
+
+        // Update rule indicators
+        Object.entries(rules).forEach(([key, ok]) => {
+            const el = document.getElementById('rule-' + key);
+            if (el) { el.classList.toggle('ok', ok); el.querySelector('i').className = ok ? 'fas fa-check-circle' : 'fas fa-circle'; }
+        });
+
+        const score = Object.values(rules).filter(Boolean).length;
+        const labels = ['', 'Fraca', 'Regular', 'Boa', 'Forte'];
+        const classes = ['', 'weak', 'fair', 'good', 'strong'];
+        const cls = classes[score];
+
+        for (let i = 1; i <= 4; i++) {
+            const bar = document.getElementById('bar' + i);
+            bar.className = 'strength-bar ' + (i <= score ? cls : '');
+        }
+
+        const lbl = document.getElementById('strengthLabel');
+        lbl.textContent = labels[score];
+        lbl.className = 'strength-label ' + cls;
+
+        verificarConfirmacao();
+    }
+
+    function verificarConfirmacao() {
+        const senha    = document.getElementById('senha').value;
+        const confirma = document.getElementById('confirmar_senha').value;
+        const msg      = document.getElementById('matchMsg');
+        if (!confirma) { msg.style.display = 'none'; return; }
+        msg.style.display = 'block';
+        if (senha === confirma) {
+            msg.textContent = '✓ Senhas coincidem';
+            msg.style.color = 'var(--success)';
+            document.getElementById('confirmar_senha').classList.remove('is-invalid');
+        } else {
+            msg.textContent = '✗ Senhas não coincidem';
+            msg.style.color = 'var(--danger)';
+        }
+    }
+
+    document.getElementById('formRegistro').addEventListener('submit', function(e) {
+        const senha    = document.getElementById('senha').value;
+        const confirma = document.getElementById('confirmar_senha').value;
+        let valid = true;
+
+        ['nome','email','senha','confirmar_senha'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el.value.trim()) { el.classList.add('is-invalid'); valid = false; }
+            else el.classList.remove('is-invalid');
+        });
+
+        if (senha !== confirma) {
+            document.getElementById('confirmar_senha').classList.add('is-invalid');
+            valid = false;
+        }
+
+        if (!valid) e.preventDefault();
+    });
+
+    document.querySelectorAll('.form-control').forEach(el => {
+        el.addEventListener('input', () => el.classList.remove('is-invalid'));
+    });
+</script>
+{% endblock %}
