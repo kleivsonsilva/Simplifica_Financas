@@ -29,14 +29,20 @@ def api(method: str, path: str, **kwargs):
     if token:
         headers['Authorization'] = f'Bearer {token}'
     headers['Content-Type'] = 'application/json'
+    headers['Accept'] = 'application/json'
     try:
-        return requests.request(
+        resp = requests.request(
             method,
             f"{GATEWAY_URL}{path}",
             headers=headers,
             timeout=TIMEOUT,
+            stream=False,
             **kwargs
         )
+        # força leitura completa do body
+        _ = resp.content
+        logger.info(f"API {method} {path} -> {resp.status_code} ({len(resp.content)} bytes)")
+        return resp
     except requests.exceptions.ConnectionError:
         logger.error(f"❌ Gateway indisponível: {path}")
         return None
