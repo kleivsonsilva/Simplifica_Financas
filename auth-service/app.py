@@ -6,7 +6,6 @@ Porta: 3000
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, flash
 from flask_cors import CORS
-import requests
 import os
 import logging
 
