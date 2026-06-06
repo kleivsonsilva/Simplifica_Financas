@@ -168,10 +168,16 @@ def dashboard():
     transac = api('GET', '/api/transacoes?limit=5')
     metas_r = api('GET', '/api/metas?status=ativa')
 
-    saldo        = saldo_r.json()   if saldo_r  and saldo_r.ok  else {'receitas': 0, 'despesas': 0, 'saldo': 0}
-    notificacoes = notif_r.json()   if notif_r  and notif_r.ok  else {'notificacoes': []}
-    transacoes   = transac.json()   if transac  and transac.ok  else {'transacoes': []}
-    metas        = metas_r.json()   if metas_r  and metas_r.ok  else []
+    def safe_json(r, default):
+        try:
+            return r.json() if r and r.ok else default
+        except Exception:
+            return default
+
+    saldo        = safe_json(saldo_r, {'receitas': 0, 'despesas': 0, 'saldo': 0})
+    notificacoes = safe_json(notif_r, {'notificacoes': []})
+    transacoes   = safe_json(transac, {'transacoes': []})
+    metas        = safe_json(metas_r, [])
 
     tpl = 'dashboard_simples.html' if modo == 'simples' else 'dashboard_avancado.html'
     return render_template(
