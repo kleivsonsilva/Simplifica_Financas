@@ -1,11 +1,5 @@
-# ================================================================
-# RENDER.YAML — Simplifica Finanças
-# Deploy distribuído com serviços externos gratuitos
-# ================================================================
-
 services:
 
-  # ─── AUTH SERVICE ─────────────────────────────────────────────
   - type: web
     name: simplifica-auth
     runtime: python
@@ -14,13 +8,16 @@ services:
     buildCommand: pip install -r auth-service/requirements.txt
     startCommand: cd auth-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: SERVICE_PORT
         value: "10000"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── TRANSACTION SERVICE ──────────────────────────────────────
   - type: web
     name: simplifica-transactions
     runtime: python
@@ -29,13 +26,18 @@ services:
     buildCommand: pip install -r transaction-service/requirements.txt
     startCommand: cd transaction-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: SERVICE_PORT
         value: "10000"
+      - key: MONGO_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── GOAL SERVICE ─────────────────────────────────────────────
   - type: web
     name: simplifica-goals
     runtime: python
@@ -44,13 +46,16 @@ services:
     buildCommand: pip install -r goal-service/requirements.txt
     startCommand: cd goal-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: SERVICE_PORT
         value: "10000"
+      - key: MONGO_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── REPORT SERVICE ───────────────────────────────────────────
   - type: web
     name: simplifica-reports
     runtime: python
@@ -59,13 +64,16 @@ services:
     buildCommand: pip install -r report-service/requirements.txt
     startCommand: cd report-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: SERVICE_PORT
         value: "10000"
+      - key: MONGO_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── NOTIFICATION SERVICE ─────────────────────────────────────
   - type: web
     name: simplifica-notifications
     runtime: python
@@ -74,13 +82,16 @@ services:
     buildCommand: pip install -r notification-service/requirements.txt
     startCommand: cd notification-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: SERVICE_PORT
         value: "10000"
+      - key: REDIS_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── API GATEWAY ──────────────────────────────────────────────
   - type: web
     name: simplifica-gateway
     runtime: python
@@ -89,13 +100,24 @@ services:
     buildCommand: pip install -r api-gateway/requirements.txt
     startCommand: cd api-gateway && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: GATEWAY_PORT
         value: "10000"
+      - key: AUTH_SERVICE_URL
+        value: https://simplifica-auth.onrender.com
+      - key: TRANSACTION_SERVICE_URL
+        value: https://simplifica-transactions.onrender.com
+      - key: GOAL_SERVICE_URL
+        value: https://simplifica-goals.onrender.com
+      - key: REPORT_SERVICE_URL
+        value: https://simplifica-reports.onrender.com
+      - key: NOTIFICATION_SERVICE_URL
+        value: https://simplifica-notifications.onrender.com
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
 
-  # ─── FRONTEND ─────────────────────────────────────────────────
   - type: web
     name: simplifica-frontend
     runtime: python
@@ -104,8 +126,10 @@ services:
     buildCommand: pip install -r frontend/requirements.txt
     startCommand: cd frontend && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
-    envVarGroups:
-      - simplifica-secrets
     envVars:
       - key: FRONTEND_PORT
         value: "10000"
+      - key: API_GATEWAY_URL
+        value: https://simplifica-gateway.onrender.com
+      - key: JWT_SECRET
+        sync: false
