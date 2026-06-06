@@ -79,7 +79,11 @@ def login():
         r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha})
 
         if r and r.status_code == 200:
-            data = r.json()
+            try:
+                data = r.json()
+            except Exception:
+                flash('Erro ao processar resposta do servidor', 'danger')
+                return render_template('login.html')
             session['token']          = data['token']
             session['usuario']        = data['usuario']
             session['modo_interface'] = data['usuario'].get('modo_interface', 'simples')
@@ -87,7 +91,6 @@ def login():
             session['user_nome']      = data['usuario']['nome']
             session['user_modo']      = data['usuario'].get('modo_interface', 'simples')
             logger.info(f"✅ Login frontend: {email}")
-            # ✅ FIX: flash de login bem-sucedido
             flash(f"Bem-vindo de volta, {data['usuario']['nome']}! 👋", 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -97,6 +100,8 @@ def login():
                     erro_msg = r.json().get('error', erro_msg)
                 except Exception:
                     pass
+            else:
+                erro_msg = 'Erro ao conectar ao servidor'
             flash(erro_msg, 'danger')
 
     return render_template('login.html')
