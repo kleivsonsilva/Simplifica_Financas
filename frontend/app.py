@@ -82,6 +82,7 @@ def login():
             try:
                 data = r.json()
             except Exception:
+                logger.error(f'Login JSON decode error. Status: {r.status_code}, Content: {repr(r.content[:200])}')
                 flash('Erro ao processar resposta do servidor', 'danger')
                 return render_template('login.html')
             session['token']          = data['token']
