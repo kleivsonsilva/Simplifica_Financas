@@ -250,9 +250,10 @@ def atualizar_perfil():
         return jsonify({'error': 'Erro interno'}), 500
 
 # ─── INICIALIZAÇÃO ────────────────────────────────────────────
+try:
+    init_db()
+except Exception as e:
+    logger.warning(f"⚠️  Banco ainda não disponível: {e}")
+
 if __name__ == '__main__':
-    try:
-        init_db()
-    except Exception as e:
-        logger.warning(f"⚠️  Banco ainda não disponível: {e}")
     app.run(host='0.0.0.0', port=PORT, debug=False)
