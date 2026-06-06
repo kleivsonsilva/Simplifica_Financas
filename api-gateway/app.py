@@ -96,7 +96,7 @@ def proxy(base_url: str, path: str) -> Response:
             allow_redirects = False
         )
         logger.info(f"→ {request.method} {url} [{resp.status_code}]")
-        excluded    = ['content-encoding', 'transfer-encoding', 'connection']
+        excluded    = ['content-encoding', 'transfer-encoding', 'connection', 'content-length']
         headers_out = {k: v for k, v in resp.headers.items() if k.lower() not in excluded}
         return Response(resp.content, status=resp.status_code, headers=headers_out)
 
