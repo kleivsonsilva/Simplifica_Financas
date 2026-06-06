@@ -18,36 +18,32 @@ app.secret_key = os.getenv('JWT_SECRET', os.urandom(32))
 CORS(app)
 
 GATEWAY_URL = os.getenv('API_GATEWAY_URL', 'http://api-gateway:8000')
+AUTH_URL    = os.getenv('AUTH_SERVICE_URL', GATEWAY_URL)
 PORT        = int(os.getenv('FRONTEND_PORT', 3000))
-TIMEOUT     = (5, 30)
+TIMEOUT     = (5, 60)
 
 # ─── HELPERS ──────────────────────────────────────────────────
-def api(method: str, path: str, **kwargs):
-    """Faz chamada ao API Gateway com o token do usuário logado"""
+def api(method: str, path: str, _direct_url: str = None, **kwargs):
+    """Faz chamada ao API Gateway (ou URL direta) com o token do usuário logado"""
     token   = session.get('token', '')
     headers = kwargs.pop('headers', {})
     if token:
         headers['Authorization'] = f'Bearer {token}'
     headers['Content-Type'] = 'application/json'
     headers['Accept'] = 'application/json'
+    url = _direct_url if _direct_url else f"{GATEWAY_URL}{path}"
     try:
         resp = requests.request(
-            method,
-            f"{GATEWAY_URL}{path}",
-            headers=headers,
-            timeout=TIMEOUT,
-            stream=False,
-            **kwargs
+            method, url, headers=headers, timeout=TIMEOUT, stream=False, **kwargs
         )
-        # força leitura completa do body
         _ = resp.content
         logger.info(f"API {method} {path} -> {resp.status_code} ({len(resp.content)} bytes)")
         return resp
     except requests.exceptions.ConnectionError:
-        logger.error(f"❌ Gateway indisponível: {path}")
+        logger.error(f"❌ Indisponível: {url}")
         return None
     except requests.exceptions.Timeout:
-        logger.error(f"⏱ Timeout: {path}")
+        logger.error(f"⏱ Timeout: {url}")
         return None
 
 def login_required(f):
@@ -82,7 +78,7 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         senha = request.form.get('senha', '')
-        r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha})
+        r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha}, _direct_url=AUTH_URL + '/auth/login')
 
         if r and r.status_code == 200:
             try:
@@ -126,7 +122,7 @@ def registro():
             'senha':          request.form.get('senha', ''),
             'modo_interface': request.form.get('modo', 'simples')  # ← corrigido
         }
-        r = api('POST', '/api/auth/registro', json=payload)
+        r = api('POST', '/api/auth/registro', json=payload, _direct_url=AUTH_URL + '/auth/registro')
 
         if r and r.status_code == 201:
             data = r.json()
