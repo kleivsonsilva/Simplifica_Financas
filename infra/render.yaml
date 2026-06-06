@@ -3,6 +3,7 @@ services:
   - type: web
     name: simplifica-auth
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r auth-service/requirements.txt
@@ -21,6 +22,7 @@ services:
   - type: web
     name: simplifica-transactions
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r transaction-service/requirements.txt
@@ -41,6 +43,7 @@ services:
   - type: web
     name: simplifica-goals
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r goal-service/requirements.txt
@@ -59,6 +62,7 @@ services:
   - type: web
     name: simplifica-reports
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r report-service/requirements.txt
@@ -77,6 +81,7 @@ services:
   - type: web
     name: simplifica-notifications
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r notification-service/requirements.txt
@@ -95,6 +100,7 @@ services:
   - type: web
     name: simplifica-gateway
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r api-gateway/requirements.txt
@@ -121,6 +127,7 @@ services:
   - type: web
     name: simplifica-frontend
     runtime: python
+    pythonVersion: "3.12"
     region: oregon
     plan: free
     buildCommand: pip install -r frontend/requirements.txt
