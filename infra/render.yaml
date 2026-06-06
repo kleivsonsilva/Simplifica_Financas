@@ -1,31 +1,6 @@
 # ================================================================
 # RENDER.YAML — Simplifica Finanças
 # Deploy distribuído com serviços externos gratuitos
-#
-# BANCOS E INFRAESTRUTURA (criar antes do deploy):
-#   PostgreSQL → https://neon.tech            (gratuito, sem dormir)
-#   MongoDB    → https://cloud.mongodb.com    (M0 gratuito, 512MB)
-#   Redis      → https://upstash.com          (10k req/dia gratuito)
-#   RabbitMQ   → https://cloudamqp.com        (Little Lemur, gratuito)
-#
-# PASSO A PASSO:
-#   1. Crie as contas nos 4 serviços acima e copie as URLs de conexão
-#   2. No painel do Render, crie um "Environment Group" chamado
-#      "simplifica-secrets" com as variáveis listadas abaixo
-#   3. Conecte este repositório no Render — ele lê este arquivo
-#      automaticamente e sobe todos os serviços de uma vez
-#
-# VARIÁVEIS OBRIGATÓRIAS no Environment Group "simplifica-secrets":
-#   JWT_SECRET      → gere com: openssl rand -hex 32
-#   DATABASE_URL    → postgresql://user:senha@host.neon.tech/simplifica_auth?sslmode=require
-#   MONGO_URL       → mongodb+srv://user:senha@cluster.mongodb.net/simplifica_financas?retryWrites=true
-#   REDIS_URL       → rediss://:senha@host.upstash.io:6380
-#   RABBITMQ_URL    → amqps://user:senha@host.cloudamqp.com/vhost
-#
-# ATENÇÃO — SLEEP NO FREE TIER:
-#   Serviços no plano gratuito do Render dormem após 15 min sem acesso.
-#   O primeiro acesso após dormir leva ~30s para acordar.
-#   Para apresentação: acesse o frontend 2 minutos antes de mostrar.
 # ================================================================
 
 services:
@@ -39,13 +14,9 @@ services:
     buildCommand: pip install -r auth-service/requirements.txt
     startCommand: cd auth-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: DATABASE_URL
-        fromGroup: simplifica-secrets
-      - key: REDIS_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: SERVICE_PORT
         value: "10000"
 
@@ -58,15 +29,9 @@ services:
     buildCommand: pip install -r transaction-service/requirements.txt
     startCommand: cd transaction-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: MONGO_URL
-        fromGroup: simplifica-secrets
-      - key: REDIS_URL
-        fromGroup: simplifica-secrets
-      - key: RABBITMQ_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: SERVICE_PORT
         value: "10000"
 
@@ -79,13 +44,9 @@ services:
     buildCommand: pip install -r goal-service/requirements.txt
     startCommand: cd goal-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: MONGO_URL
-        fromGroup: simplifica-secrets
-      - key: RABBITMQ_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: SERVICE_PORT
         value: "10000"
 
@@ -98,13 +59,9 @@ services:
     buildCommand: pip install -r report-service/requirements.txt
     startCommand: cd report-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: MONGO_URL
-        fromGroup: simplifica-secrets
-      - key: REDIS_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: SERVICE_PORT
         value: "10000"
 
@@ -117,21 +74,13 @@ services:
     buildCommand: pip install -r notification-service/requirements.txt
     startCommand: cd notification-service && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: REDIS_URL
-        fromGroup: simplifica-secrets
-      - key: RABBITMQ_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: SERVICE_PORT
         value: "10000"
 
   # ─── API GATEWAY ──────────────────────────────────────────────
-  # O gateway precisa das URLs públicas dos outros serviços.
-  # Após o primeiro deploy, o Render gera URLs no formato:
-  #   https://simplifica-auth.onrender.com
-  # Adicione essas URLs no Environment Group "simplifica-secrets".
   - type: web
     name: simplifica-gateway
     runtime: python
@@ -140,26 +89,13 @@ services:
     buildCommand: pip install -r api-gateway/requirements.txt
     startCommand: cd api-gateway && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: AUTH_SERVICE_URL
-        fromGroup: simplifica-secrets
-      - key: TRANSACTION_SERVICE_URL
-        fromGroup: simplifica-secrets
-      - key: GOAL_SERVICE_URL
-        fromGroup: simplifica-secrets
-      - key: REPORT_SERVICE_URL
-        fromGroup: simplifica-secrets
-      - key: NOTIFICATION_SERVICE_URL
-        fromGroup: simplifica-secrets
-      - key: REDIS_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: GATEWAY_PORT
         value: "10000"
 
   # ─── FRONTEND ─────────────────────────────────────────────────
-  # Também precisa da URL pública do gateway após o primeiro deploy.
   - type: web
     name: simplifica-frontend
     runtime: python
@@ -168,19 +104,8 @@ services:
     buildCommand: pip install -r frontend/requirements.txt
     startCommand: cd frontend && gunicorn --bind 0.0.0.0:10000 --workers 2 --timeout 120 app:app
     healthCheckPath: /health
+    envVarGroups:
+      - simplifica-secrets
     envVars:
-      - key: API_GATEWAY_URL
-        fromGroup: simplifica-secrets
-      - key: JWT_SECRET
-        fromGroup: simplifica-secrets
       - key: FRONTEND_PORT
         value: "10000"
-
-# ================================================================
-# NOTA: As entradas "databases" do render.yaml original foram
-# removidas pois agora usamos serviços externos:
-#   - PostgreSQL → Neon.tech (sem dormir, mais confiável)
-#   - Redis      → Upstash   (persistente entre deploys)
-# O banco interno do Render no free tier é apagado após 90 dias
-# e não aceita conexões externas — por isso a troca.
-# ================================================================
