@@ -46,6 +46,20 @@ def api(method: str, path: str, _direct_url: str = None, **kwargs):
         logger.error(f"⏱ Timeout: {url}")
         return None
 
+def safe_json(r, default=None):
+    if default is None:
+        default = {}
+    try:
+        return r.json() if r and r.ok else default
+    except Exception:
+        return default
+
+def safe_error(r, default='Erro ao conectar ao servidor'):
+    try:
+        return r.json().get('error', default) if r else default
+    except Exception:
+        return default
+
 def login_required(f):
     from functools import wraps
     @wraps(f)
@@ -168,12 +182,6 @@ def dashboard():
     transac = api('GET', '/api/transacoes?limit=5')
     metas_r = api('GET', '/api/metas?status=ativa')
 
-    def safe_json(r, default):
-        try:
-            return r.json() if r and r.ok else default
-        except Exception:
-            return default
-
     saldo        = safe_json(saldo_r, {'receitas': 0, 'despesas': 0, 'saldo': 0})
     notificacoes = safe_json(notif_r, {'notificacoes': []})
     transacoes   = safe_json(transac, {'transacoes': []})
@@ -207,11 +215,10 @@ def adicionar_transacao():
         if r and r.status_code == 201:
             flash('Transação adicionada com sucesso! ✅', 'success')
             return redirect(url_for('dashboard'))
-        erro_msg = (r.json().get('error') if r else 'Erro ao conectar') or 'Erro ao salvar transação'
-        flash(erro_msg, 'danger')
+        flash(safe_error(r, 'Erro ao salvar transação'), 'danger')
 
     cat_r      = api('GET', '/api/transacoes/categorias')
-    categorias = cat_r.json() if cat_r and cat_r.ok else {'despesa': [], 'receita': []}
+    categorias = safe_json(cat_r, {'despesa': [], 'receita': []})
     tpl        = 'adicionar_transacao_simples.html' if modo == 'simples' else 'adicionar_transacao_avancado.html'
     return render_template(tpl, categorias=categorias, modo=modo, usuario=session.get('usuario', {}))
 
@@ -237,12 +244,11 @@ def metas():
         if r and r.status_code == 201:
             flash('Meta criada com sucesso! 🎯', 'success')
         else:
-            erro_msg = (r.json().get('error') if r else 'Erro ao conectar') or 'Erro ao criar meta'
-            flash(erro_msg, 'danger')
+            flash(safe_error(r, 'Erro ao criar meta'), 'danger')
         return redirect(url_for('metas'))
 
     metas_r = api('GET', '/api/metas?status=todas')
-    lista   = metas_r.json() if metas_r and metas_r.ok else []
+    lista   = safe_json(metas_r, [])
     tpl     = 'metas_simples.html' if modo == 'simples' else 'metas_avancado.html'
     return render_template(tpl, metas=lista if isinstance(lista, list) else [], modo=modo, usuario=session.get('usuario', {}))
 
@@ -255,8 +261,7 @@ def deposito_meta(meta_id):
     if r and r.ok:
         flash('Depósito realizado com sucesso! 💰', 'success')
     else:
-        erro_msg = (r.json().get('error') if r else 'Erro ao conectar') or 'Erro no depósito'
-        flash(erro_msg, 'danger')
+        flash(safe_error(r, 'Erro no depósito'), 'danger')
     return redirect(url_for('metas'))
 
 @app.route('/metas/<meta_id>/cancelar', methods=['POST'])
@@ -306,7 +311,7 @@ def relatorios():
     mes      = request.args.get('mes', '')
     path     = f'/api/relatorios/resumo{"?mes=" + mes if mes else ""}'
     resumo_r = api('GET', path)
-    resumo   = resumo_r.json() if resumo_r and resumo_r.ok else {}
+    resumo   = safe_json(resumo_r, {})
     return render_template('relatorios.html', resumo=resumo, mes=mes, modo=get_modo(), usuario=session.get('usuario', {}))
 
 @app.route('/relatorios/excel')
@@ -364,7 +369,7 @@ def configuracoes():
         return redirect(url_for('configuracoes'))
 
     perfil_r = api('GET', '/api/auth/perfil')
-    perfil   = perfil_r.json() if perfil_r and perfil_r.ok else session.get('usuario', {})
+    perfil   = safe_json(perfil_r, session.get('usuario', {}))
     return render_template('configuracoes.html', perfil=perfil, modo=get_modo(), usuario=session.get('usuario', {}))
 
 # ─── TRANSAÇÕES - EXCLUIR ─────────────────────────────────────
