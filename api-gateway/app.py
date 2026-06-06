@@ -83,13 +83,15 @@ def proxy(base_url: str, path: str) -> Response:
     url     = f"{base_url}{path}"
     headers = {k: v for k, v in request.headers if k != 'Host'}
     try:
+        json_data = request.get_json(silent=True)
+        form_data = request.form or None
         resp = http.request(
             method          = request.method,
             url             = url,
             headers         = headers,
             params          = request.args,
-            json            = request.get_json(silent=True),
-            data            = request.form or None,
+            json            = json_data if json_data is not None else None,
+            data            = form_data if json_data is None else None,
             timeout         = TIMEOUT,
             allow_redirects = False
         )
