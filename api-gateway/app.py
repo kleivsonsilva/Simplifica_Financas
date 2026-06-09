@@ -36,14 +36,16 @@ _missing = [v for v, val in [('JWT_SECRET', JWT_SECRET)] if not val]
 if _missing:
     raise EnvironmentError(f"Variáveis de ambiente obrigatórias não definidas: {_missing}")
 
+# ─── TIMEOUT ADEQUADO PARA RENDER FREE (serviços hibernam) ────
 TIMEOUT = (15, 60)
 
 # ─── HTTP SESSION COM CONNECTION POOL ─────────────────────────
 def make_session():
     s       = requests.Session()
-    retry   = Retry(total=2, backoff_factor=0.2, status_forcelist=[502, 503, 504])
+    retry   = Retry(total=3, backoff_factor=1.0, status_forcelist=[502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=50)
-    s.mount('http://', adapter)
+    s.mount('http://', adapter)   # docker / local
+    s.mount('https://', adapter)  # ← RENDER: todos os serviços usam HTTPS
     return s
 
 http = make_session()
@@ -53,7 +55,11 @@ _redis_client = None
 def get_redis():
     global _redis_client
     if _redis_client is None and REDIS_URL:
-        _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        try:
+            _redis_client = redis.from_url(REDIS_URL, decode_responses=True, socket_connect_timeout=5)
+        except Exception as e:
+            logger.warning(f"⚠️ Redis indisponível: {e}")
+            return None
     return _redis_client
 
 # ─── RATE LIMITING ────────────────────────────────────────────
@@ -65,7 +71,7 @@ def rate_limit(max_req=60, window=60):
             ip  = request.remote_addr
             key = f"rl:{ip}"
             try:
-                r   = get_redis()
+                r = get_redis()
                 if r:
                     cnt = r.incr(key)
                     if cnt == 1:
@@ -73,7 +79,7 @@ def rate_limit(max_req=60, window=60):
                     if cnt > max_req:
                         return jsonify({'error': 'Rate limit excedido. Tente novamente em breve.'}), 429
             except Exception:
-                pass
+                pass  # sem Redis, ignora rate limiting
             return f(*args, **kwargs)
         return wrapper
     return decorator
@@ -100,12 +106,15 @@ def proxy(base_url: str, path: str) -> Response:
         headers_out = {k: v for k, v in resp.headers.items() if k.lower() not in excluded}
         return Response(resp.content, status=resp.status_code, headers=headers_out)
 
-    except requests.exceptions.ConnectionError:
-        logger.error(f"❌ Serviço indisponível: {base_url}")
-        return jsonify({'error': 'Serviço temporariamente indisponível'}), 503
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"❌ Serviço indisponível: {base_url} — {e}")
+        return jsonify({'error': 'Serviço temporariamente indisponível. Tente novamente em alguns segundos.'}), 503
     except requests.exceptions.Timeout:
         logger.error(f"⏱ Timeout: {url}")
-        return jsonify({'error': 'Timeout ao processar requisição'}), 504
+        return jsonify({'error': 'Serviço demorou muito para responder. Tente novamente.'}), 504
+    except Exception as e:
+        logger.error(f"❌ Erro inesperado no proxy: {e}")
+        return jsonify({'error': 'Erro interno no gateway'}), 500
 
 # ─── AUTH ─────────────────────────────────────────────────────
 def verificar_token_gateway() -> bool:
@@ -144,7 +153,7 @@ def health():
         ('notification', NOTIFICATION_URL)
     ]:
         try:
-            r = http.get(f"{url}/health", timeout=(2, 5))
+            r = http.get(f"{url}/health", timeout=(10, 15))
             services[nome] = 'ok' if r.status_code == 200 else 'degraded'
         except Exception:
             services[nome] = 'down'
