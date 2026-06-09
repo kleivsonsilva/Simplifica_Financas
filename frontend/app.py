@@ -18,20 +18,19 @@ app.secret_key = os.getenv('JWT_SECRET', os.urandom(32))
 CORS(app)
 
 GATEWAY_URL = os.getenv('API_GATEWAY_URL', 'http://api-gateway:8000')
-AUTH_URL    = os.getenv('AUTH_SERVICE_URL', GATEWAY_URL)
 PORT        = int(os.getenv('FRONTEND_PORT', 3000))
-TIMEOUT     = (30, 60)  # 30s conexão para suportar cold start do Render free tier
+TIMEOUT     = (30, 60)
 
 # ─── HELPERS ──────────────────────────────────────────────────
-def api(method: str, path: str, _direct_url: str = None, **kwargs):
-    """Faz chamada ao API Gateway (ou URL direta) com o token do usuário logado"""
+def api(method: str, path: str, **kwargs):
+    """Faz chamada ao API Gateway com o token do usuário logado"""
     token   = session.get('token', '')
     headers = kwargs.pop('headers', {})
     if token:
         headers['Authorization'] = f'Bearer {token}'
     headers['Content-Type'] = 'application/json'
     headers['Accept'] = 'application/json'
-    url = _direct_url if _direct_url else f"{GATEWAY_URL}{path}"
+    url = f"{GATEWAY_URL}{path}"
     try:
         resp = requests.request(
             method, url, headers=headers, timeout=TIMEOUT, stream=False, **kwargs
@@ -129,12 +128,11 @@ def registro():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        # ✅ FIX: campo no template é 'modo', não 'modo_interface'
         payload = {
             'nome':           request.form.get('nome', '').strip(),
             'email':          request.form.get('email', '').strip(),
             'senha':          request.form.get('senha', ''),
-            'modo_interface': request.form.get('modo', 'simples')  # ← corrigido
+            'modo_interface': request.form.get('modo', 'simples')
         }
         r = api('POST', '/api/auth/registro', json=payload)
 
@@ -146,7 +144,6 @@ def registro():
             session['user_id']        = data['usuario']['id']
             session['user_nome']      = data['usuario']['nome']
             session['user_modo']      = data['usuario'].get('modo_interface', 'simples')
-            # ✅ FIX: flash de conta criada com sucesso
             flash(f"Conta criada com sucesso! Bem-vindo(a), {data['usuario']['nome']}! 🎉", 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -229,7 +226,6 @@ def adicionar_transacao():
 def metas():
     modo = get_modo()
 
-    # ✅ FIX: aceita POST para criar meta
     if request.method == 'POST':
         payload = {
             'titulo':      request.form.get('titulo', '').strip(),
@@ -255,7 +251,6 @@ def metas():
 @app.route('/metas/<meta_id>/deposito', methods=['POST'])
 @login_required
 def deposito_meta(meta_id):
-    """✅ FIX: rota Flask para depósito em meta (antes ia direto para /api/ sem autenticação de sessão)"""
     valor = request.form.get('valor')
     r = api('POST', f'/api/metas/{meta_id}/deposito', json={'valor': float(valor)})
     if r and r.ok:
@@ -267,7 +262,6 @@ def deposito_meta(meta_id):
 @app.route('/metas/<meta_id>/cancelar', methods=['POST'])
 @login_required
 def cancelar_meta(meta_id):
-    """✅ FIX: rota Flask para cancelar meta"""
     r = api('POST', f'/api/metas/{meta_id}/cancelar')
     if r and r.ok:
         flash('Meta cancelada.', 'warning')
@@ -278,7 +272,6 @@ def cancelar_meta(meta_id):
 @app.route('/metas/<meta_id>/excluir', methods=['POST'])
 @login_required
 def excluir_meta(meta_id):
-    """✅ FIX: rota Flask para excluir meta"""
     r = api('DELETE', f'/api/metas/{meta_id}')
     if r and r.ok:
         flash('Meta excluída com sucesso.', 'success')
@@ -289,7 +282,6 @@ def excluir_meta(meta_id):
 @app.route('/metas/<meta_id>/editar', methods=['POST'])
 @login_required
 def editar_meta(meta_id):
-    """✅ FIX: rota Flask para editar meta"""
     payload = {k: v for k, v in {
         'titulo':      request.form.get('titulo', '').strip(),
         'valor_alvo':  request.form.get('valor_alvo'),
