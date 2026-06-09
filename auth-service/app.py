@@ -22,6 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [AUTH] %(levelname)s
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.config['JSON_ENSURE_ASCII'] = False  # ← FIX: garante UTF-8 correto no JSON
 CORS(app)
 
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -30,7 +31,7 @@ JWT_SECRET   = os.getenv('JWT_SECRET')
 PORT         = int(os.getenv('SERVICE_PORT', 5001))
 
 # ─── VALIDAÇÃO DE VARIÁVEIS CRÍTICAS ─────────────────────────
-_missing = [v for v, val in [('DATABASE_URL', DATABASE_URL), ('REDIS_URL', REDIS_URL), ('JWT_SECRET', JWT_SECRET)] if not val]
+_missing = [v for v, val in [('DATABASE_URL', DATABASE_URL), ('JWT_SECRET', JWT_SECRET)] if not val]
 if _missing:
     raise EnvironmentError(f"Variáveis de ambiente obrigatórias não definidas: {_missing}")
 
@@ -39,6 +40,8 @@ def get_db():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def get_redis():
+    if not REDIS_URL:
+        return None
     return redis.from_url(REDIS_URL, decode_responses=True)
 
 # ─── INICIALIZAÇÃO DO BANCO ────────────────────────────────────
@@ -72,12 +75,14 @@ def gerar_token(user_id: str, email: str, nome: str) -> str:
         'iat':   datetime.utcnow(),
         'exp':   datetime.utcnow() + timedelta(hours=24)
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm='HS256')
+    token = jwt.encode(payload, JWT_SECRET, algorithm='HS256')
+    # garante que sempre retorna string (compatibilidade PyJWT < 2.0)
+    return token if isinstance(token, str) else token.decode('utf-8')
 
 def verificar_token(token: str) -> dict:
     try:
         r = get_redis()
-        if r.get(f"blacklist:{token}"):
+        if r and r.get(f"blacklist:{token}"):
             return None
         return jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
@@ -120,6 +125,8 @@ def registro():
         cur  = conn.cursor()
         cur.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
         if cur.fetchone():
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Email já cadastrado'}), 409
 
         senha_hash = generate_password_hash(senha)
@@ -159,6 +166,8 @@ def login():
         usuario = cur.fetchone()
 
         if not usuario or not check_password_hash(usuario['senha_hash'], senha):
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Credenciais inválidas'}), 401
 
         cur.execute("UPDATE usuarios SET ultimo_login = %s WHERE id = %s", (datetime.utcnow(), usuario['id']))
@@ -170,7 +179,8 @@ def login():
         token   = gerar_token(user_id, usuario['email'], usuario['nome'])
 
         r = get_redis()
-        r.setex(f"session:{user_id}", 86400, token)
+        if r:
+            r.setex(f"session:{user_id}", 86400, token)
 
         logger.info(f"✅ Login realizado: {email}")
         return jsonify({
@@ -192,8 +202,9 @@ def login():
 def logout():
     token = request.headers.get('Authorization', '').replace('Bearer ', '')
     r     = get_redis()
-    r.setex(f"blacklist:{token}", 86400, '1')
-    r.delete(f"session:{request.user['sub']}")
+    if r:
+        r.setex(f"blacklist:{token}", 86400, '1')
+        r.delete(f"session:{request.user['sub']}")
     logger.info(f"✅ Logout: {request.user['email']}")
     return jsonify({'message': 'Logout realizado com sucesso'})
 
