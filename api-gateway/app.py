@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, origins='*')
 
-# ─── CONFIG ───────────────────────────────────────────────────
 AUTH_URL         = os.getenv('AUTH_SERVICE_URL',         'http://auth-service:5001')
 TRANSACTION_URL  = os.getenv('TRANSACTION_SERVICE_URL',  'http://transaction-service:5002')
 GOAL_URL         = os.getenv('GOAL_SERVICE_URL',         'http://goal-service:5003')
@@ -31,26 +30,22 @@ REDIS_URL        = os.getenv('REDIS_URL')
 JWT_SECRET       = os.getenv('JWT_SECRET')
 PORT             = int(os.getenv('GATEWAY_PORT', 8000))
 
-# ─── VALIDAÇÃO DE VARIÁVEIS CRÍTICAS ─────────────────────────
 _missing = [v for v, val in [('JWT_SECRET', JWT_SECRET)] if not val]
 if _missing:
     raise EnvironmentError(f"Variáveis de ambiente obrigatórias não definidas: {_missing}")
 
-# ─── TIMEOUT ADEQUADO PARA RENDER FREE (serviços hibernam) ────
 TIMEOUT = (15, 60)
 
-# ─── HTTP SESSION COM CONNECTION POOL ─────────────────────────
 def make_session():
     s       = requests.Session()
     retry   = Retry(total=3, backoff_factor=1.0, status_forcelist=[502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry, pool_connections=20, pool_maxsize=50)
-    s.mount('http://', adapter)   # docker / local
-    s.mount('https://', adapter)  # ← RENDER: todos os serviços usam HTTPS
+    s.mount('http://', adapter)
+    s.mount('https://', adapter)  # ← ESSENCIAL para o Render
     return s
 
 http = make_session()
 
-# ─── REDIS ────────────────────────────────────────────────────
 _redis_client = None
 def get_redis():
     global _redis_client
@@ -58,11 +53,10 @@ def get_redis():
         try:
             _redis_client = redis.from_url(REDIS_URL, decode_responses=True, socket_connect_timeout=5)
         except Exception as e:
-            logger.warning(f"⚠️ Redis indisponível: {e}")
+            logger.warning(f"Redis indisponivel: {e}")
             return None
     return _redis_client
 
-# ─── RATE LIMITING ────────────────────────────────────────────
 def rate_limit(max_req=60, window=60):
     def decorator(f):
         from functools import wraps
@@ -77,17 +71,18 @@ def rate_limit(max_req=60, window=60):
                     if cnt == 1:
                         r.expire(key, window)
                     if cnt > max_req:
-                        return jsonify({'error': 'Rate limit excedido. Tente novamente em breve.'}), 429
+                        return jsonify({'error': 'Rate limit excedido.'}), 429
             except Exception:
-                pass  # sem Redis, ignora rate limiting
+                pass
             return f(*args, **kwargs)
         return wrapper
     return decorator
 
-# ─── PROXY ────────────────────────────────────────────────────
 def proxy(base_url: str, path: str) -> Response:
-    url     = f"{base_url}{path}"
-    headers = {k: v for k, v in request.headers if k != 'Host'}
+    url = f"{base_url}{path}"
+    skip_req = {'host', 'accept-encoding'}                          # ← CORREÇÃO PRINCIPAL
+    headers  = {k: v for k, v in request.headers if k.lower() not in skip_req}
+    headers['Accept-Encoding'] = 'identity'                         # ← força JSON puro, sem gzip
     try:
         json_data = request.get_json(silent=True)
         form_data = request.form or None
@@ -101,22 +96,20 @@ def proxy(base_url: str, path: str) -> Response:
             timeout         = TIMEOUT,
             allow_redirects = False
         )
-        logger.info(f"→ {request.method} {url} [{resp.status_code}]")
+        logger.info(f"-> {request.method} {url} [{resp.status_code}]")
         excluded    = ['content-encoding', 'transfer-encoding', 'connection', 'content-length']
         headers_out = {k: v for k, v in resp.headers.items() if k.lower() not in excluded}
         return Response(resp.content, status=resp.status_code, headers=headers_out)
-
     except requests.exceptions.ConnectionError as e:
-        logger.error(f"❌ Serviço indisponível: {base_url} — {e}")
-        return jsonify({'error': 'Serviço temporariamente indisponível. Tente novamente em alguns segundos.'}), 503
+        logger.error(f"Servico indisponivel: {base_url} - {e}")
+        return jsonify({'error': 'Servico temporariamente indisponivel. Tente novamente.'}), 503
     except requests.exceptions.Timeout:
-        logger.error(f"⏱ Timeout: {url}")
-        return jsonify({'error': 'Serviço demorou muito para responder. Tente novamente.'}), 504
+        logger.error(f"Timeout: {url}")
+        return jsonify({'error': 'Servico demorou muito. Tente novamente.'}), 504
     except Exception as e:
-        logger.error(f"❌ Erro inesperado no proxy: {e}")
+        logger.error(f"Erro no proxy: {e}")
         return jsonify({'error': 'Erro interno no gateway'}), 500
 
-# ─── AUTH ─────────────────────────────────────────────────────
 def verificar_token_gateway() -> bool:
     token = request.headers.get('Authorization', '').replace('Bearer ', '')
     if not token:
@@ -132,16 +125,14 @@ def requer_autenticacao(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not verificar_token_gateway():
-            return jsonify({'error': 'Autenticação necessária'}), 401
+            return jsonify({'error': 'Autenticacao necessaria'}), 401
         return f(*args, **kwargs)
     return wrapper
 
-# ─── LOGGING ──────────────────────────────────────────────────
 @app.before_request
 def log_request():
-    logger.info(f"📥 {request.method} {request.path} | IP: {request.remote_addr}")
+    logger.info(f">> {request.method} {request.path} | IP: {request.remote_addr}")
 
-# ─── ROTAS PÚBLICAS ───────────────────────────────────────────
 @app.route('/health', methods=['GET'])
 def health():
     services = {}
@@ -170,7 +161,6 @@ def registro():
 def login():
     return proxy(AUTH_URL, '/auth/login')
 
-# ─── ROTAS PROTEGIDAS ─────────────────────────────────────────
 @app.route('/api/auth/logout', methods=['POST'])
 @requer_autenticacao
 def logout():
