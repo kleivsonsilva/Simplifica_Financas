@@ -36,7 +36,7 @@ _missing = [v for v, val in [('JWT_SECRET', JWT_SECRET)] if not val]
 if _missing:
     raise EnvironmentError(f"Variáveis de ambiente obrigatórias não definidas: {_missing}")
 
-TIMEOUT = (3, 30)
+TIMEOUT = (15, 60)
 
 # ─── HTTP SESSION COM CONNECTION POOL ─────────────────────────
 def make_session():
