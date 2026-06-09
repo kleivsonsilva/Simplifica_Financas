@@ -49,15 +49,34 @@ def safe_json(r, default=None):
     if default is None:
         default = {}
     try:
-        return r.json() if r and r.ok else default
+        if r and r.ok:
+            # Python 3.14 é mais estrito com caracteres de controle — força UTF-8
+            text = r.content.decode('utf-8', errors='replace')
+            import json
+            return json.loads(text)
+        return default
     except Exception:
         return default
 
 def safe_error(r, default='Erro ao conectar ao servidor'):
     try:
-        return r.json().get('error', default) if r else default
+        if not r:
+            return default
+        import json
+        text = r.content.decode('utf-8', errors='replace')
+        return json.loads(text).get('error', default)
     except Exception:
         return default
+
+def parse_response(r):
+    """Faz parse seguro de qualquer resposta da API — compatível com Python 3.14"""
+    try:
+        import json
+        text = r.content.decode('utf-8', errors='replace')
+        return json.loads(text)
+    except Exception as e:
+        logger.error(f'JSON parse error: {e} | content: {repr(r.content[:200])}')
+        return None
 
 def login_required(f):
     from functools import wraps
@@ -94,10 +113,8 @@ def login():
         r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha})
 
         if r and r.status_code == 200:
-            try:
-                data = r.json()
-            except Exception:
-                logger.error(f'Login JSON decode error. Status: {r.status_code}, Content: {repr(r.content[:200])}')
+            data = parse_response(r)
+            if not data:
                 flash('Erro ao processar resposta do servidor', 'danger')
                 return render_template('login.html')
             session['token']          = data['token']
@@ -106,19 +123,11 @@ def login():
             session['user_id']        = data['usuario']['id']
             session['user_nome']      = data['usuario']['nome']
             session['user_modo']      = data['usuario'].get('modo_interface', 'simples')
-            logger.info(f"✅ Login frontend: {email}")
-            flash(f"Bem-vindo de volta, {data['usuario']['nome']}! 👋", 'success')
+            logger.info(f"Login frontend: {email}")
+            flash(f"Bem-vindo de volta, {data['usuario']['nome']}!", 'success')
             return redirect(url_for('dashboard'))
         else:
-            erro_msg = 'Email ou senha inválidos'
-            if r:
-                try:
-                    erro_msg = r.json().get('error', erro_msg)
-                except Exception:
-                    pass
-            else:
-                erro_msg = 'Erro ao conectar ao servidor'
-            flash(erro_msg, 'danger')
+            flash(safe_error(r, 'Email ou senha invalidos'), 'danger')
 
     return render_template('login.html')
 
@@ -137,25 +146,20 @@ def registro():
         r = api('POST', '/api/auth/registro', json=payload)
 
         if r and r.status_code == 201:
-            data = r.json()
+            data = parse_response(r)
+            if not data:
+                flash('Conta criada! Faca login para continuar.', 'success')
+                return redirect(url_for('login'))
             session['token']          = data['token']
             session['usuario']        = data['usuario']
             session['modo_interface'] = data['usuario'].get('modo_interface', 'simples')
             session['user_id']        = data['usuario']['id']
             session['user_nome']      = data['usuario']['nome']
             session['user_modo']      = data['usuario'].get('modo_interface', 'simples')
-            flash(f"Conta criada com sucesso! Bem-vindo(a), {data['usuario']['nome']}! 🎉", 'success')
+            flash(f"Conta criada com sucesso! Bem-vindo(a), {data['usuario']['nome']}!", 'success')
             return redirect(url_for('dashboard'))
         else:
-            erro_msg = 'Erro no registro'
-            if r:
-                try:
-                    erro_msg = r.json().get('error', erro_msg)
-                except Exception:
-                    pass
-            else:
-                erro_msg = 'Erro ao conectar ao servidor'
-            flash(erro_msg, 'danger')
+            flash(safe_error(r, 'Erro no registro'), 'danger')
 
     return render_template('registro.html')
 
