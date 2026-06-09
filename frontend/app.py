@@ -20,7 +20,7 @@ CORS(app)
 GATEWAY_URL = os.getenv('API_GATEWAY_URL', 'http://api-gateway:8000')
 AUTH_URL    = os.getenv('AUTH_SERVICE_URL', GATEWAY_URL)
 PORT        = int(os.getenv('FRONTEND_PORT', 3000))
-TIMEOUT     = (5, 60)
+TIMEOUT     = (30, 60)  # 30s conexão para suportar cold start do Render free tier
 
 # ─── HELPERS ──────────────────────────────────────────────────
 def api(method: str, path: str, _direct_url: str = None, **kwargs):
@@ -92,7 +92,7 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         senha = request.form.get('senha', '')
-        r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha}, _direct_url=AUTH_URL + '/auth/login')
+        r     = api('POST', '/api/auth/login', json={'email': email, 'senha': senha})
 
         if r and r.status_code == 200:
             try:
@@ -136,7 +136,7 @@ def registro():
             'senha':          request.form.get('senha', ''),
             'modo_interface': request.form.get('modo', 'simples')  # ← corrigido
         }
-        r = api('POST', '/api/auth/registro', json=payload, _direct_url=AUTH_URL + '/auth/registro')
+        r = api('POST', '/api/auth/registro', json=payload)
 
         if r and r.status_code == 201:
             data = r.json()
