@@ -321,7 +321,19 @@ def relatorios():
     path     = f'/api/relatorios/resumo{"?mes=" + mes if mes else ""}'
     resumo_r = api('GET', path)
     resumo   = safe_json(resumo_r, {})
-    return render_template('relatorios.html', resumo=resumo, mes=mes, modo=get_modo(), usuario=session.get('usuario', {}))
+
+    despesas_categoria = resumo.get('por_categoria', [])
+    evolucao_mensal    = resumo.get('evolucao_mensal', [])
+
+    return render_template(
+        'relatorios.html',
+        resumo             = resumo,
+        mes                = mes,
+        modo               = get_modo(),
+        usuario            = session.get('usuario', {}),
+        despesas_categoria = despesas_categoria,
+        evolucao_mensal    = evolucao_mensal
+    )
 
 @app.route('/relatorios/excel')
 @login_required
