@@ -97,16 +97,24 @@ def resumo():
             {'$limit': 10}
         ]))
 
+        por_categoria_receita = list(db.transacoes.aggregate([
+            {'$match': {**filtro, 'tipo': 'receita'}},
+            {'$group': {'_id': '$categoria', 'total': {'$sum': '$valor'}}},
+            {'$sort': {'total': -1}},
+            {'$limit': 10}
+        ]))
+
         receitas = next((g['total'] for g in geral if g['_id'] == 'receita'), 0)
         despesas = next((g['total'] for g in geral if g['_id'] == 'despesa'), 0)
 
         resultado = {
-            'receitas':         float(receitas),
-            'despesas':         float(despesas),
-            'saldo':            float(receitas - despesas),
-            'maior_categoria':  por_categoria[0]['_id'] if por_categoria else None,
-            'por_categoria':    [{'categoria': c['_id'], 'total': float(c['total'])} for c in por_categoria],
-            'gerado_em':        datetime.utcnow().isoformat()
+            'receitas':              float(receitas),
+            'despesas':              float(despesas),
+            'saldo':                 float(receitas - despesas),
+            'maior_categoria':       por_categoria[0]['_id'] if por_categoria else None,
+            'por_categoria':         [{'categoria': c['_id'], 'total': float(c['total'])} for c in por_categoria],
+            'por_categoria_receita': [{'categoria': c['_id'], 'total': float(c['total'])} for c in por_categoria_receita],
+            'gerado_em':             datetime.utcnow().isoformat()
         }
 
         if r:
