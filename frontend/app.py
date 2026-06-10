@@ -323,6 +323,7 @@ def relatorios():
     resumo   = safe_json(resumo_r, {})
 
     despesas_categoria = resumo.get('por_categoria', [])
+    receitas_categoria = resumo.get('por_categoria_receita', [])
     evolucao_mensal    = resumo.get('evolucao_mensal', [])
 
     return render_template(
@@ -332,6 +333,7 @@ def relatorios():
         modo               = get_modo(),
         usuario            = session.get('usuario', {}),
         despesas_categoria = despesas_categoria,
+        receitas_categoria = receitas_categoria,
         evolucao_mensal    = evolucao_mensal
     )
 
