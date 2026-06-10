@@ -189,6 +189,18 @@ def dashboard():
     metas        = safe_json(metas_r, [])
 
     tpl = 'dashboard_simples.html' if modo == 'simples' else 'dashboard_avancado.html'
+
+    if modo == 'avancado':
+        resumo_r = api('GET', '/api/relatorios/resumo')
+        resumo   = safe_json(resumo_r, {})
+        mes_atual = type('obj', (object,), {
+            'receitas': resumo.get('receitas', 0),
+            'despesas': resumo.get('despesas', 0),
+            'saldo':    resumo.get('saldo', 0),
+        })()
+    else:
+        mes_atual = type('obj', (object,), {'receitas': 0, 'despesas': 0, 'saldo': 0})()
+
     return render_template(
         tpl,
         usuario      = session.get('usuario', {}),
@@ -196,7 +208,8 @@ def dashboard():
         notificacoes = notificacoes.get('notificacoes', []),
         transacoes   = transacoes.get('transacoes', []),
         metas        = metas if isinstance(metas, list) else [],
-        modo         = modo
+        modo         = modo,
+        mes_atual    = mes_atual
     )
 
 @app.route('/transacoes', methods=['GET', 'POST'])
