@@ -145,7 +145,7 @@
                     <div class="mode-grid mb-4">
                         <!-- Simples -->
                         <div class="mode-opt">
-                            <input type="radio" name="modo" id="modo_simples" value="simples"
+                            <input type="radio" name="modo_interface" id="modo_simples" value="simples"
                                    {% if session.get('usuario', {}).get('modo_interface', 'simples') == 'simples' %}checked{% endif %}>
                             <label class="mode-opt-label" for="modo_simples">
                                 <div class="mode-opt-icon icon-simples"><i class="fas fa-smile"></i></div>
@@ -160,7 +160,7 @@
                         </div>
                         <!-- Avançado -->
                         <div class="mode-opt">
-                            <input type="radio" name="modo" id="modo_avancado" value="avancado"
+                            <input type="radio" name="modo_interface" id="modo_avancado" value="avancado"
                                    {% if session.get('usuario', {}).get('modo_interface', 'simples') == 'avancado' %}checked{% endif %}>
                             <label class="mode-opt-label" for="modo_avancado">
                                 <div class="mode-opt-icon icon-avancado"><i class="fas fa-chart-line"></i></div>
