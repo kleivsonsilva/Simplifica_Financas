@@ -277,7 +277,7 @@
                             {% for t in transacoes %}
                             <tr>
                                 <td style="padding-left:1.5rem;" class="font-mono" style="color:var(--brand-500);">
-                                    {{ t.data.strftime('%d/%m/%y') }}
+                                    {{ t.data[8:10] }}/{{ t.data[5:7] }}/{{ t.data[2:4] }}
                                 </td>
                                 <td><span class="fw-600">{{ t.descricao }}</span></td>
                                 <td class="d-none d-md-table-cell">
