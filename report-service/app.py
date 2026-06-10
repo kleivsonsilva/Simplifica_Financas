@@ -110,7 +110,7 @@ def resumo():
         }
 
         if r:
-            r.setex(cache_key, 600, json.dumps(resultado))
+            r.setex(cache_key, 60, json.dumps(resultado))
         return jsonify(resultado)
 
     except Exception as e:
