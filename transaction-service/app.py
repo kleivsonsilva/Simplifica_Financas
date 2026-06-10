@@ -93,6 +93,8 @@ def invalidar_cache_saldo(user_id: str):
     r = get_redis()
     r.delete(f"saldo:{user_id}")
     r.delete(f"dashboard:{user_id}")
+    r.delete(f"relatorio:{user_id}:all")
+    r.delete(f"relatorio:{user_id}:2026-06")
 
 def calcular_saldo_db(user_id: str, db) -> dict:
     pipeline = [
