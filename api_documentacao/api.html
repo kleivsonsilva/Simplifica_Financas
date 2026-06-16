@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simplifica Finanças — Documentação da API</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:        #0E0F14;
+    --surface:   #161820;
+    --border:    #252733;
+    --muted:     #3A3D50;
+    --text:      #E8E9F0;
+    --subtle:    #8B8FA8;
+    --primary:   #6366F1;
+    --primary-d: #4F52C8;
+    --green:     #22C55E;
+    --red:       #EF4444;
+    --amber:     #F59E0B;
+    --teal:      #14B8A6;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'Inter', sans-serif;
+    --radius:    8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ─── SIDEBAR ──────────────────────────────────────────── */
+  aside {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0 40px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .logo .wordmark {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .logo .sub {
+    font-size: 11px;
+    color: var(--subtle);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  .nav-section {
+    padding: 8px 20px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--subtle);
+  }
+
+  aside a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 20px;
+    color: var(--subtle);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  aside a:hover { color: var(--text); }
+  aside a.active { color: var(--primary); border-left-color: var(--primary); }
+
+  .method-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── MAIN ─────────────────────────────────────────────── */
+  main {
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 56px 120px;
+    margin: 0 auto;
+  }
+
+  /* ─── HERO ─────────────────────────────────────────────── */
+  .hero {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99,102,241,.12);
+    color: var(--primary);
+    border: 1px solid rgba(99,102,241,.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    color: #fff;
+  }
+  .hero h1 span { color: var(--primary); }
+  .hero p { color: var(--subtle); max-width: 580px; font-size: 15px; line-height: 1.7; }
+
+  .base-url-block {
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .base-url-block .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    white-space: nowrap;
+  }
+  .base-url-block .url {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+  }
+
+  /* ─── METADATA GRID ────────────────────────────────────── */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 56px;
+  }
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .meta-card .key {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 6px;
+  }
+  .meta-card .val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ─── SECTION HEADERS ──────────────────────────────────── */
+  .section {
+    margin-bottom: 60px;
+    scroll-margin-top: 24px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .section-desc { color: var(--subtle); font-size: 13px; margin-bottom: 20px; }
+
+  /* ─── ENDPOINT CARD ────────────────────────────────────── */
+  .endpoint {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .endpoint:hover { border-color: var(--muted); }
+
+  .endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .method-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    width: 52px;
+    text-align: center;
+  }
+  .GET    { background: rgba(34,197,94,.12);  color: #22C55E; }
+  .POST   { background: rgba(99,102,241,.15); color: #818CF8; }
+  .PUT    { background: rgba(245,158,11,.12); color: #F59E0B; }
+  .DELETE { background: rgba(239,68,68,.12);  color: #F87171; }
+
+  .endpoint-path {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+  .endpoint-summary {
+    color: var(--subtle);
+    font-size: 12px;
+  }
+  .auth-icon {
+    font-size: 12px;
+    color: var(--amber);
+    opacity: .8;
+    margin-left: 4px;
+  }
+  .chevron {
+    color: var(--subtle);
+    font-size: 10px;
+    transition: transform .2s;
+  }
+
+  .endpoint-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 20px 18px;
+  }
+  .endpoint-body.open { display: block; }
+  .endpoint.open .chevron { transform: rotate(180deg); }
+
+  /* ─── BODY INTERNALS ───────────────────────────────────── */
+  .body-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 680px) { .body-row { grid-template-columns: 1fr; } }
+
+  .body-section h4 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 10px;
+  }
+
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .param-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .param-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(37,39,51,.6);
+    vertical-align: top;
+  }
+  .param-table tr:last-child td { border-bottom: none; }
+  .param-name  { font-family: var(--mono); color: #A5B4FC; font-size: 12px; }
+  .param-type  { font-family: var(--mono); color: var(--subtle); font-size: 11px; }
+  .param-req   { color: var(--red); font-size: 10px; font-weight: 600; }
+  .param-opt   { color: var(--subtle); font-size: 10px; }
+  .param-desc  { color: var(--text); }
+
+  pre {
+    background: #0A0B10;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    overflow-x: auto;
+    line-height: 1.55;
+    color: #C8C9D4;
+  }
+  .json-key    { color: #A5B4FC; }
+  .json-str    { color: #86EFAC; }
+  .json-num    { color: #FCA5A5; }
+  .json-bool   { color: var(--amber); }
+  .json-null   { color: var(--subtle); }
+
+  .resp-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .s2xx { background: rgba(34,197,94,.1);  color: #22C55E; border: 1px solid rgba(34,197,94,.2); }
+  .s4xx { background: rgba(239,68,68,.1);  color: #F87171; border: 1px solid rgba(239,68,68,.2); }
+  .s5xx { background: rgba(245,158,11,.1); color: #F59E0B; border: 1px solid rgba(245,158,11,.2); }
+
+  /* ─── ARCH SECTION ─────────────────────────────────────── */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .svc-auth::before   { background: var(--primary); }
+  .svc-trans::before  { background: var(--green); }
+  .svc-goal::before   { background: var(--amber); }
+  .svc-report::before { background: var(--teal); }
+  .svc-notif::before  { background: var(--red); }
+  .svc-gw::before     { background: #C084FC; }
+
+  .svc-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .svc-port {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--subtle);
+    margin-bottom: 8px;
+  }
+  .svc-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--subtle);
+    font-family: var(--mono);
+  }
+
+  /* ─── RATE LIMIT TABLE ─────────────────────────────────── */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .info-table th {
+    text-align: left;
+    background: var(--surface);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    border-bottom: 1px solid var(--border);
+  }
+  .info-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(37,39,51,.5);
+    vertical-align: middle;
+  }
+  .info-table tr:last-child td { border-bottom: none; }
+  .info-table tbody tr:hover { background: rgba(255,255,255,.02); }
+
+  /* ─── CALLOUT ──────────────────────────────────────────── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    background: rgba(99,102,241,.07);
+    border: 1px solid rgba(99,102,241,.25);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .callout.warn {
+    background: rgba(245,158,11,.07);
+    border-color: rgba(245,158,11,.25);
+  }
+  .callout-icon { flex-shrink: 0; font-size: 16px; }
+
+  /* ─── FLOW DIAGRAM ─────────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .flow-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .flow-arrow { color: var(--subtle); }
+
+  /* ─── SCROLLBAR ────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<aside>
+  <div class="logo">
+    <div class="wordmark">Simplifica Finanças</div>
+    <div class="sub">API Reference v1.0</div>
+  </div>
+
+  <div class="nav-section">Visão Geral</div>
+  <a href="#intro">Introdução</a>
+  <a href="#arquitetura">Arquitetura</a>
+  <a href="#autenticacao-info">Autenticação</a>
+  <a href="#rate-limits">Rate Limits</a>
+  <a href="#erros">Erros</a>
+
+  <div class="nav-section" style="margin-top:12px">Endpoints</div>
+  <a href="#auth"><span class="method-dot" style="background:#818CF8"></span>Auth</a>
+  <a href="#transacoes"><span class="method-dot" style="background:#22C55E"></span>Transações</a>
+  <a href="#metas"><span class="method-dot" style="background:#F59E0B"></span>Metas</a>
+  <a href="#relatorios"><span class="method-dot" style="background:#14B8A6"></span>Relatórios</a>
+  <a href="#notificacoes"><span class="method-dot" style="background:#F87171"></span>Notificações</a>
+  <a href="#health"><span class="method-dot" style="background:#6B7280"></span>Health</a>
+</aside>
+
+<!-- ── MAIN ────────────────────────────────────────────────── -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero" id="intro">
+    <div class="hero-badge">⚡ REST API</div>
+    <h1>Simplifica <span>Finanças</span><br>API Reference</h1>
+    <p>API REST distribuída para controle financeiro pessoal. Arquitetura de microsserviços com autenticação JWT, cache Redis e mensageria assíncrona via RabbitMQ.</p>
+    <div class="base-url-block">
+      <span class="label">Base URL</span>
+      <span class="url">https://&lt;seu-domínio&gt;/api</span>
+    </div>
+  </div>
+
+  <!-- META -->
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="key">Versão</div>
+      <div class="val">v1.0</div>
+    </div>
+    <div class="meta-card">
+      <div class="key">Protocolo</div>
+      <div class="val">HTTPS · REST</div>
+    </div>
+    <div class="meta-card">
+      <div class="key">Formato</div>
+      <div class="val">JSON</div>
+    </div>
+    <div class="meta-card">
+      <div class="key">Autenticação</div>
+      <div class="val">JWT Bearer</div>
+    </div>
+    <div class="meta-card">
+      <div class="key">Token TTL</div>
+      <div class="val">24 horas</div>
+    </div>
+    <div class="meta-card">
+      <div class="key">Timeout</div>
+      <div class="val">15s conn · 60s read</div>
+    </div>
+  </div>
+
+  <!-- ARQUITETURA -->
+  <div class="section" id="arquitetura">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(99,102,241,.12)">🏗️</div>
+      <h2>Arquitetura</h2>
+    </div>
+    <p class="section-desc">Todos os requests passam pelo <strong>API Gateway</strong> (porta 8000) que autentica, faz rate limiting e roteia para os microsserviços internos.</p>
+
+    <div class="flow">
+      <div class="flow-node">Cliente</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">API Gateway :8000</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">Auth :5001</div>
+      <div class="flow-arrow">·</div>
+      <div class="flow-node">Transaction :5002</div>
+      <div class="flow-arrow">·</div>
+      <div class="flow-node">Goal :5003</div>
+      <div class="flow-arrow">·</div>
+      <div class="flow-node">Report :5004</div>
+      <div class="flow-arrow">·</div>
+      <div class="flow-node">Notification :5005</div>
+    </div>
+
+    <div class="arch-grid">
+      <div class="service-card svc-gw">
+        <div class="svc-name">API Gateway</div>
+        <div class="svc-port">:8000 — ponto único de entrada</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">JWT</span>
+          <span class="tag">Redis (rate limit)</span>
+          <span class="tag">Retry 3×</span>
+        </div>
+      </div>
+      <div class="service-card svc-auth">
+        <div class="svc-name">Auth Service</div>
+        <div class="svc-port">:5001 — registro, login, perfil</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">PostgreSQL</span>
+          <span class="tag">Redis (sessões)</span>
+          <span class="tag">Bcrypt</span>
+        </div>
+      </div>
+      <div class="service-card svc-trans">
+        <div class="svc-name">Transaction Service</div>
+        <div class="svc-port">:5002 — receitas e despesas</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">MongoDB</span>
+          <span class="tag">Redis (cache saldo)</span>
+          <span class="tag">RabbitMQ</span>
+        </div>
+      </div>
+      <div class="service-card svc-goal">
+        <div class="svc-name">Goal Service</div>
+        <div class="svc-port">:5003 — metas financeiras</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">MongoDB</span>
+          <span class="tag">RabbitMQ (consumer)</span>
+        </div>
+      </div>
+      <div class="service-card svc-report">
+        <div class="svc-name">Report Service</div>
+        <div class="svc-port">:5004 — relatórios e exportação</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">MongoDB</span>
+          <span class="tag">openpyxl</span>
+          <span class="tag">fpdf</span>
+        </div>
+      </div>
+      <div class="service-card svc-notif">
+        <div class="svc-name">Notification Service</div>
+        <div class="svc-port">:5005 — alertas em tempo real</div>
+        <div class="svc-tech">
+          <span class="tag">Flask</span>
+          <span class="tag">Redis (fila)</span>
+          <span class="tag">RabbitMQ (consumer)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTENTICAÇÃO -->
+  <div class="section" id="autenticacao-info">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,.12)">🔐</div>
+      <h2>Autenticação</h2>
+    </div>
+    <div class="callout">
+      <span class="callout-icon">ℹ️</span>
+      <span>Todas as rotas marcadas com 🔒 exigem o header <code>Authorization: Bearer &lt;token&gt;</code>. O token JWT é obtido via <code>POST /api/auth/login</code> e tem validade de <strong>24 horas</strong>. Tokens revogados por logout são bloqueados via blacklist no Redis.</span>
+    </div>
+    <pre><span class="json-key">Authorization</span>: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</pre>
+
+    <p style="color:var(--subtle);font-size:13px;margin-top:14px">O payload do token contém: <code style="color:#A5B4FC">sub</code> (user_id UUID), <code style="color:#A5B4FC">email</code>, <code style="color:#A5B4FC">nome</code>, <code style="color:#A5B4FC">iat</code> e <code style="color:#A5B4FC">exp</code>.</p>
+  </div>
+
+  <!-- RATE LIMITS -->
+  <div class="section" id="rate-limits">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(20,184,166,.12)">⏱️</div>
+      <h2>Rate Limits</h2>
+    </div>
+    <p class="section-desc">Rate limiting é aplicado por IP no API Gateway usando Redis. Respostas <code>429 Too Many Requests</code> são retornadas ao exceder o limite.</p>
+    <table class="info-table">
+      <thead><tr><th>Rota</th><th>Limite</th><th>Janela</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST /api/auth/registro</code></td><td>10 req</td><td>60 s</td></tr>
+        <tr><td><code>POST /api/auth/login</code></td><td>20 req</td><td>60 s</td></tr>
+        <tr><td><code>GET/POST /api/transacoes</code></td><td>120 req</td><td>60 s</td></tr>
+        <tr><td>Demais rotas autenticadas</td><td>60 req</td><td>60 s</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ERROS -->
+  <div class="section" id="erros">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(239,68,68,.12)">❌</div>
+      <h2>Erros</h2>
+    </div>
+    <p class="section-desc">Todos os erros retornam JSON com a chave <code>error</code>.</p>
+    <table class="info-table">
+      <thead><tr><th>Status</th><th>Significado</th><th>Exemplo</th></tr></thead>
+      <tbody>
+        <tr><td><code>400</code></td><td>Dados inválidos ou ausentes</td><td><code>{"error":"Valor deve ser positivo"}</code></td></tr>
+        <tr><td><code>401</code></td><td>Token ausente, inválido ou expirado</td><td><code>{"error":"Token inválido ou expirado"}</code></td></tr>
+        <tr><td><code>404</code></td><td>Recurso não encontrado</td><td><code>{"error":"Transação não encontrada"}</code></td></tr>
+        <tr><td><code>409</code></td><td>Conflito (ex: email duplicado)</td><td><code>{"error":"Email já cadastrado"}</code></td></tr>
+        <tr><td><code>429</code></td><td>Rate limit excedido</td><td><code>{"error":"Rate limit excedido."}</code></td></tr>
+        <tr><td><code>500</code></td><td>Erro interno do servidor</td><td><code>{"error":"Erro interno"}</code></td></tr>
+        <tr><td><code>503</code></td><td>Microsserviço indisponível</td><td><code>{"error":"Servico temporariamente indisponivel."}</code></td></tr>
+        <tr><td><code>504</code></td><td>Timeout no proxy</td><td><code>{"error":"Servico demorou muito."}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ───── AUTH ───────────────────────────────────────────── -->
+  <div class="section" id="auth">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(99,102,241,.12)">👤</div>
+      <h2>Autenticação</h2>
+    </div>
+    <p class="section-desc">Microsserviço <strong>auth-service</strong> · PostgreSQL · Redis</p>
+
+    <!-- POST /registro -->
+    <div class="endpoint" id="ep-registro">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/auth/registro</span>
+        <span class="endpoint-summary">Cria novo usuário e retorna token JWT</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON)</h4>
+            <table class="param-table">
+              <thead><tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descrição</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">nome</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc">Nome completo</td></tr>
+                <tr><td class="param-name">email</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc">E-mail único</td></tr>
+                <tr><td class="param-name">senha</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc">Mínimo 6 caracteres</td></tr>
+                <tr><td class="param-name">modo_interface</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc"><code>simples</code> (padrão) ou <code>avancado</code></td></tr>
+              </tbody>
+            </table>
+            <pre style="margin-top:10px">{
+  <span class="json-key">"nome"</span>: <span class="json-str">"João Silva"</span>,
+  <span class="json-key">"email"</span>: <span class="json-str">"joao@email.com"</span>,
+  <span class="json-key">"senha"</span>: <span class="json-str">"senha123"</span>,
+  <span class="json-key">"modo_interface"</span>: <span class="json-str">"simples"</span>
+}</pre>
+          </div>
+          <div class="body-section">
+            <h4>Respostas</h4>
+            <div class="resp-status s2xx">201 Created</div>
+            <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"Usuário criado com sucesso"</span>,
+  <span class="json-key">"token"</span>: <span class="json-str">"eyJ..."</span>,
+  <span class="json-key">"usuario"</span>: {
+    <span class="json-key">"id"</span>: <span class="json-str">"uuid"</span>,
+    <span class="json-key">"nome"</span>: <span class="json-str">"João Silva"</span>,
+    <span class="json-key">"email"</span>: <span class="json-str">"joao@email.com"</span>,
+    <span class="json-key">"modo_interface"</span>: <span class="json-str">"simples"</span>,
+    <span class="json-key">"data_criacao"</span>: <span class="json-str">"2026-06-10T..."</span>
+  }
+}</pre>
+            <div class="resp-status s4xx" style="margin-top:10px">409 Conflict</div>
+            <pre>{ <span class="json-key">"error"</span>: <span class="json-str">"Email já cadastrado"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /login -->
+    <div class="endpoint" id="ep-login">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/auth/login</span>
+        <span class="endpoint-summary">Autentica credenciais e retorna token JWT</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON)</h4>
+            <pre>{
+  <span class="json-key">"email"</span>: <span class="json-str">"joao@email.com"</span>,
+  <span class="json-key">"senha"</span>: <span class="json-str">"senha123"</span>
+}</pre>
+          </div>
+          <div class="body-section">
+            <h4>Respostas</h4>
+            <div class="resp-status s2xx">200 OK</div>
+            <pre>{
+  <span class="json-key">"token"</span>: <span class="json-str">"eyJ..."</span>,
+  <span class="json-key">"usuario"</span>: {
+    <span class="json-key">"id"</span>: <span class="json-str">"uuid"</span>,
+    <span class="json-key">"nome"</span>: <span class="json-str">"João Silva"</span>,
+    <span class="json-key">"email"</span>: <span class="json-str">"joao@email.com"</span>,
+    <span class="json-key">"modo_interface"</span>: <span class="json-str">"simples"</span>
+  }
+}</pre>
+            <div class="resp-status s4xx" style="margin-top:10px">401 Unauthorized</div>
+            <pre>{ <span class="json-key">"error"</span>: <span class="json-str">"Credenciais inválidas"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /logout -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/auth/logout</span>
+        <span class="endpoint-summary">Invalida o token atual (blacklist)</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Notas</h4>
+            <p style="color:var(--subtle);font-size:13px">Não requer body. O token do header é adicionado à blacklist no Redis por 24h. Sessão do usuário é removida.</p>
+          </div>
+          <div class="body-section">
+            <h4>Respostas</h4>
+            <div class="resp-status s2xx">200 OK</div>
+            <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Logout realizado com sucesso"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /perfil -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/auth/perfil</span>
+        <span class="endpoint-summary">Retorna dados do usuário autenticado</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Sem parâmetros</h4>
+            <p style="color:var(--subtle);font-size:13px">Identifica o usuário pelo JWT.</p>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{
+  <span class="json-key">"id"</span>: <span class="json-str">"uuid"</span>,
+  <span class="json-key">"nome"</span>: <span class="json-str">"João Silva"</span>,
+  <span class="json-key">"email"</span>: <span class="json-str">"joao@email.com"</span>,
+  <span class="json-key">"modo_interface"</span>: <span class="json-str">"simples"</span>,
+  <span class="json-key">"data_criacao"</span>: <span class="json-str">"2026-01-01T..."</span>,
+  <span class="json-key">"ultimo_login"</span>: <span class="json-str">"2026-06-10T..."</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUT /perfil -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge PUT">PUT</span>
+        <span class="endpoint-path">/api/auth/perfil</span>
+        <span class="endpoint-summary">Atualiza nome e/ou modo de interface</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON) — campos opcionais</h4>
+            <table class="param-table">
+              <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">nome</td><td class="param-type">string</td><td class="param-desc">Novo nome</td></tr>
+                <tr><td class="param-name">modo_interface</td><td class="param-type">string</td><td class="param-desc"><code>simples</code> ou <code>avancado</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Perfil atualizado com sucesso"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── TRANSAÇÕES ─────────────────────────────────────── -->
+  <div class="section" id="transacoes">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(34,197,94,.12)">💸</div>
+      <h2>Transações</h2>
+    </div>
+    <p class="section-desc">Microsserviço <strong>transaction-service</strong> · MongoDB · Redis (cache saldo 5 min) · RabbitMQ</p>
+
+    <!-- GET /transacoes -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/transacoes</span>
+        <span class="endpoint-summary">Lista transações com paginação e filtros</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Tipo</th><th>Padrão</th><th>Descrição</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">page</td><td class="param-type">int</td><td>1</td><td class="param-desc">Página atual</td></tr>
+                <tr><td class="param-name">limit</td><td class="param-type">int</td><td>20</td><td class="param-desc">Itens por página</td></tr>
+                <tr><td class="param-name">tipo</td><td class="param-type">string</td><td>–</td><td class="param-desc"><code>receita</code> ou <code>despesa</code></td></tr>
+                <tr><td class="param-name">categoria</td><td class="param-type">string</td><td>–</td><td class="param-desc">Ex: <code>Alimentação</code></td></tr>
+                <tr><td class="param-name">data_inicio</td><td class="param-type">string</td><td>–</td><td class="param-desc"><code>YYYY-MM-DD</code></td></tr>
+                <tr><td class="param-name">data_fim</td><td class="param-type">string</td><td>–</td><td class="param-desc"><code>YYYY-MM-DD</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{
+  <span class="json-key">"transacoes"</span>: [
+    {
+      <span class="json-key">"id"</span>: <span class="json-str">"mongo_id"</span>,
+      <span class="json-key">"tipo"</span>: <span class="json-str">"despesa"</span>,
+      <span class="json-key">"valor"</span>: <span class="json-num">150.00</span>,
+      <span class="json-key">"descricao"</span>: <span class="json-str">"Mercado"</span>,
+      <span class="json-key">"categoria"</span>: <span class="json-str">"Alimentação"</span>,
+      <span class="json-key">"data"</span>: <span class="json-str">"2026-06-10"</span>
+    }
+  ],
+  <span class="json-key">"total"</span>: <span class="json-num">42</span>,
+  <span class="json-key">"page"</span>: <span class="json-num">1</span>,
+  <span class="json-key">"pages"</span>: <span class="json-num">3</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /transacoes -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/transacoes</span>
+        <span class="endpoint-summary">Cria uma nova transação (receita ou despesa)</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON)</h4>
+            <table class="param-table">
+              <thead><tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descrição</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">tipo</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc"><code>receita</code> ou <code>despesa</code></td></tr>
+                <tr><td class="param-name">valor</td><td class="param-type">float</td><td class="param-req">✱</td><td class="param-desc">Valor positivo em R$</td></tr>
+                <tr><td class="param-name">descricao</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc">Descrição breve</td></tr>
+                <tr><td class="param-name">categoria</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc">Padrão: <code>Outros</code></td></tr>
+                <tr><td class="param-name">data</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc"><code>YYYY-MM-DD</code>. Padrão: hoje</td></tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top:14px">
+              <h4>Categorias Despesa</h4>
+              <p style="color:var(--subtle);font-size:12px;margin-top:6px;font-family:var(--mono)">Alimentação · Moradia · Transporte · Saúde · Educação · Lazer · Vestuário · Serviços · Estoque · Outros</p>
+              <h4 style="margin-top:10px">Categorias Receita</h4>
+              <p style="color:var(--subtle);font-size:12px;margin-top:6px;font-family:var(--mono)">Salário · Vendas · Freelance · Investimentos · Aposentadoria · Aluguel · Outros</p>
+            </div>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 201</h4>
+            <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"Transação criada com sucesso"</span>,
+  <span class="json-key">"id"</span>: <span class="json-str">"mongo_id"</span>
+}</pre>
+            <div class="callout warn" style="margin-top:12px">
+              <span class="callout-icon">⚡</span>
+              <span>Ao criar uma transação, um evento é publicado na fila <code>transacao_criada</code> do RabbitMQ. O Goal Service e o Notification Service reagem assincronamente.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE /transacoes/:id -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge DELETE">DELETE</span>
+        <span class="endpoint-path">/api/transacoes/{transacao_id}</span>
+        <span class="endpoint-summary">Remove (soft delete) uma transação</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Path Parameter</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr></thead>
+              <tbody><tr><td class="param-name">transacao_id</td><td class="param-type">string</td><td class="param-desc">MongoDB ObjectId da transação</td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Respostas</h4>
+            <div class="resp-status s2xx">200 OK</div>
+            <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Transação excluída com sucesso"</span> }</pre>
+            <div class="resp-status s4xx" style="margin-top:8px">404 Not Found</div>
+            <pre>{ <span class="json-key">"error"</span>: <span class="json-str">"Transação não encontrada"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /saldo -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/transacoes/saldo</span>
+        <span class="endpoint-summary">Saldo consolidado (receitas − despesas) · Cache 5 min</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Sem parâmetros</h4>
+            <p style="color:var(--subtle);font-size:13px">Resultado cacheado no Redis por 5 minutos. Invalidado automaticamente a cada criação ou exclusão de transação.</p>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{
+  <span class="json-key">"receitas"</span>: <span class="json-num">5000.00</span>,
+  <span class="json-key">"despesas"</span>: <span class="json-num">3200.50</span>,
+  <span class="json-key">"saldo"</span>: <span class="json-num">1799.50</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /resumo-mensal -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/transacoes/resumo-mensal</span>
+        <span class="endpoint-summary">Totais agrupados por mês e tipo</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <h4>Resposta 200 — array de agregações MongoDB</h4>
+          <pre>[
+  { <span class="json-key">"_id"</span>: { <span class="json-key">"mes"</span>: <span class="json-str">"2026-05"</span>, <span class="json-key">"tipo"</span>: <span class="json-str">"despesa"</span> }, <span class="json-key">"total"</span>: <span class="json-num">2100.00</span> },
+  { <span class="json-key">"_id"</span>: { <span class="json-key">"mes"</span>: <span class="json-str">"2026-05"</span>, <span class="json-key">"tipo"</span>: <span class="json-str">"receita"</span> }, <span class="json-key">"total"</span>: <span class="json-num">4500.00</span> }
+]</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /por-categoria -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/transacoes/por-categoria</span>
+        <span class="endpoint-summary">Totais agrupados por categoria</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Padrão</th><th>Descrição</th></tr></thead>
+              <tbody><tr><td class="param-name">tipo</td><td><code>despesa</code></td><td class="param-desc"><code>receita</code> ou <code>despesa</code></td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>[
+  { <span class="json-key">"_id"</span>: <span class="json-str">"Alimentação"</span>, <span class="json-key">"total"</span>: <span class="json-num">850.00</span> },
+  { <span class="json-key">"_id"</span>: <span class="json-str">"Transporte"</span>, <span class="json-key">"total"</span>: <span class="json-num">320.00</span> }
+]</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /categorias -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/transacoes/categorias</span>
+        <span class="endpoint-summary">Lista todas as categorias disponíveis</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{
+  <span class="json-key">"despesa"</span>: [<span class="json-str">"Alimentação"</span>, <span class="json-str">"Moradia"</span>, <span class="json-str">"Transporte"</span>, ...],
+  <span class="json-key">"receita"</span>: [<span class="json-str">"Salário"</span>, <span class="json-str">"Vendas"</span>, <span class="json-str">"Freelance"</span>, ...]
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── METAS ──────────────────────────────────────────── -->
+  <div class="section" id="metas">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,.12)">🎯</div>
+      <h2>Metas</h2>
+    </div>
+    <p class="section-desc">Microsserviço <strong>goal-service</strong> · MongoDB · RabbitMQ (consumer). Metas são atualizadas automaticamente quando uma <em>receita</em> é registrada — a meta com menor percentual de conclusão recebe o valor.</p>
+
+    <!-- GET /metas -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/metas</span>
+        <span class="endpoint-summary">Lista metas do usuário</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Padrão</th><th>Valores</th></tr></thead>
+              <tbody><tr><td class="param-name">status</td><td><code>ativa</code></td><td class="param-desc"><code>ativa</code> · <code>concluida</code> · <code>cancelada</code> · <code>todas</code></td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>[{
+  <span class="json-key">"id"</span>: <span class="json-str">"mongo_id"</span>,
+  <span class="json-key">"titulo"</span>: <span class="json-str">"Viagem"</span>,
+  <span class="json-key">"valor_alvo"</span>: <span class="json-num">3000.00</span>,
+  <span class="json-key">"valor_atual"</span>: <span class="json-num">1200.00</span>,
+  <span class="json-key">"percentual"</span>: <span class="json-num">40.0</span>,
+  <span class="json-key">"status"</span>: <span class="json-str">"ativa"</span>,
+  <span class="json-key">"cor"</span>: <span class="json-str">"#6366F1"</span>
+}]</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /metas -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/metas</span>
+        <span class="endpoint-summary">Cria uma nova meta financeira</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON)</h4>
+            <table class="param-table">
+              <thead><tr><th>Campo</th><th>Tipo</th><th>Req.</th><th>Descrição</th></tr></thead>
+              <tbody>
+                <tr><td class="param-name">titulo</td><td class="param-type">string</td><td class="param-req">✱</td><td class="param-desc">Nome da meta</td></tr>
+                <tr><td class="param-name">valor_alvo</td><td class="param-type">float</td><td class="param-req">✱</td><td class="param-desc">Valor objetivo em R$</td></tr>
+                <tr><td class="param-name">descricao</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc">Detalhes opcionais</td></tr>
+                <tr><td class="param-name">categoria</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc">Padrão: <code>Outros</code></td></tr>
+                <tr><td class="param-name">data_inicio</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc"><code>YYYY-MM-DD</code>. Padrão: hoje</td></tr>
+                <tr><td class="param-name">data_limite</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc"><code>YYYY-MM-DD</code></td></tr>
+                <tr><td class="param-name">cor</td><td class="param-type">string</td><td class="param-opt">–</td><td class="param-desc">Hex color. Padrão: <code>#6366F1</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 201</h4>
+            <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"Meta criada com sucesso"</span>,
+  <span class="json-key">"id"</span>: <span class="json-str">"mongo_id"</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUT /metas/:id -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge PUT">PUT</span>
+        <span class="endpoint-path">/api/metas/{meta_id}</span>
+        <span class="endpoint-summary">Edita campos de uma meta existente</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <h4>Campos editáveis (todos opcionais)</h4>
+          <p style="color:var(--subtle);font-size:13px"><code>titulo</code> · <code>descricao</code> · <code>valor_alvo</code> · <code>data_limite</code> · <code>categoria</code> · <code>cor</code></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /deposito -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/metas/{meta_id}/deposito</span>
+        <span class="endpoint-summary">Adiciona valor manualmente a uma meta ativa</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Request Body (JSON)</h4>
+            <pre>{ <span class="json-key">"valor"</span>: <span class="json-num">200.00</span> }</pre>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{
+  <span class="json-key">"message"</span>: <span class="json-str">"Depósito realizado"</span>,
+  <span class="json-key">"novo_valor"</span>: <span class="json-num">1400.00</span>
+}</pre>
+            <p style="color:var(--subtle);font-size:12px;margin-top:8px">Se o novo valor ≥ valor_alvo, o status é atualizado automaticamente para <code>concluida</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /cancelar -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge POST">POST</span>
+        <span class="endpoint-path">/api/metas/{meta_id}/cancelar</span>
+        <span class="endpoint-summary">Cancela uma meta (status → cancelada)</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Meta cancelada"</span> }</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE /metas/:id -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge DELETE">DELETE</span>
+        <span class="endpoint-path">/api/metas/{meta_id}</span>
+        <span class="endpoint-summary">Remove permanentemente uma meta</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Meta excluída com sucesso"</span> }</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── RELATÓRIOS ─────────────────────────────────────── -->
+  <div class="section" id="relatorios">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(20,184,166,.12)">📊</div>
+      <h2>Relatórios</h2>
+    </div>
+    <p class="section-desc">Microsserviço <strong>report-service</strong> · MongoDB · Redis (cache 60 s) · openpyxl · fpdf</p>
+
+    <!-- GET /resumo -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/relatorios/resumo</span>
+        <span class="endpoint-summary">Resumo financeiro completo · Cache 60 s</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr></thead>
+              <tbody><tr><td class="param-name">mes</td><td class="param-type">string</td><td class="param-desc"><code>YYYY-MM</code> — filtra mês específico. Omitir = todos os períodos.</td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <pre>{
+  <span class="json-key">"receitas"</span>: <span class="json-num">5000.00</span>,
+  <span class="json-key">"despesas"</span>: <span class="json-num">3200.50</span>,
+  <span class="json-key">"saldo"</span>: <span class="json-num">1799.50</span>,
+  <span class="json-key">"maior_categoria"</span>: <span class="json-str">"Alimentação"</span>,
+  <span class="json-key">"por_categoria"</span>: [...],
+  <span class="json-key">"por_categoria_receita"</span>: [...],
+  <span class="json-key">"gerado_em"</span>: <span class="json-str">"2026-06-10T..."</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /exportar/excel -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/relatorios/exportar/excel</span>
+        <span class="endpoint-summary">Download da planilha .xlsx com todas as transações</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr></thead>
+              <tbody><tr><td class="param-name">mes</td><td class="param-type">string</td><td class="param-desc"><code>YYYY-MM</code> (opcional)</td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <p style="color:var(--subtle);font-size:13px">Content-Type: <code>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</code></p>
+            <p style="color:var(--subtle);font-size:13px;margin-top:6px">Download: <code>simplifica_financas_YYYY-MM.xlsx</code></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /exportar/pdf -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/relatorios/exportar/pdf</span>
+        <span class="endpoint-summary">Download do relatório em PDF (últimas 100 transações)</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-row">
+          <div class="body-section">
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+              <thead><tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr></thead>
+              <tbody><tr><td class="param-name">mes</td><td class="param-type">string</td><td class="param-desc"><code>YYYY-MM</code> (opcional)</td></tr></tbody>
+            </table>
+          </div>
+          <div class="body-section">
+            <h4>Resposta 200</h4>
+            <p style="color:var(--subtle);font-size:13px">Content-Type: <code>application/pdf</code></p>
+            <p style="color:var(--subtle);font-size:13px;margin-top:6px">Download: <code>simplifica_financas_YYYY-MM.pdf</code></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── NOTIFICAÇÕES ───────────────────────────────────── -->
+  <div class="section" id="notificacoes">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(239,68,68,.12)">🔔</div>
+      <h2>Notificações</h2>
+    </div>
+    <p class="section-desc">Microsserviço <strong>notification-service</strong> · Redis (lista LIFO, até 50 itens por usuário) · RabbitMQ (consumer). Notificações são geradas automaticamente a cada transação criada ou excluída. Despesas acima de R$ 1.000 geram alerta especial.</p>
+
+    <!-- GET /notificacoes -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/api/notificacoes</span>
+        <span class="endpoint-summary">Lista as últimas 20 notificações do usuário</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{
+  <span class="json-key">"notificacoes"</span>: [
+    {
+      <span class="json-key">"mensagem"</span>: <span class="json-str">"⚠️ Despesa alta registrada: R$ 1500.00 em Moradia"</span>,
+      <span class="json-key">"tipo"</span>: <span class="json-str">"alerta"</span>,
+      <span class="json-key">"data"</span>: <span class="json-str">"2026-06-10T10:23:00"</span>,
+      <span class="json-key">"lida"</span>: <span class="json-bool">false</span>
+    }
+  ],
+  <span class="json-key">"total"</span>: <span class="json-num">1</span>
+}
+<span style="color:var(--subtle)">// tipos: "info" | "sucesso" | "alerta"</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE /limpar -->
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge DELETE">DELETE</span>
+        <span class="endpoint-path">/api/notificacoes/limpar</span>
+        <span class="endpoint-summary">Remove todas as notificações do usuário</span>
+        <span class="auth-icon">🔒</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{ <span class="json-key">"message"</span>: <span class="json-str">"Notificações limpas"</span> }</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── HEALTH ─────────────────────────────────────────── -->
+  <div class="section" id="health">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(107,114,128,.12)">💚</div>
+      <h2>Health Check</h2>
+    </div>
+    <p class="section-desc">O endpoint de health do Gateway agrega o status de todos os microsserviços.</p>
+
+    <div class="endpoint">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="method-badge GET">GET</span>
+        <span class="endpoint-path">/health</span>
+        <span class="endpoint-summary">Status de todos os serviços (sem autenticação)</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="endpoint-body">
+        <div class="body-section" style="grid-column:1/-1">
+          <div class="resp-status s2xx">200 OK</div>
+          <pre>{
+  <span class="json-key">"gateway"</span>: <span class="json-str">"ok"</span>,
+  <span class="json-key">"status"</span>: <span class="json-str">"ok"</span>,
+  <span class="json-key">"services"</span>: {
+    <span class="json-key">"auth"</span>:         <span class="json-str">"ok"</span>,
+    <span class="json-key">"transaction"</span>:  <span class="json-str">"ok"</span>,
+    <span class="json-key">"goal"</span>:         <span class="json-str">"ok"</span>,
+    <span class="json-key">"report"</span>:       <span class="json-str">"ok"</span>,
+    <span class="json-key">"notification"</span>: <span class="json-str">"ok"</span>
+  }
+}
+<span style="color:var(--subtle)">// status pode ser: "ok" | "degraded" | "down"</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+function toggle(header) {
+  const endpoint = header.parentElement;
+  const body = endpoint.querySelector('.endpoint-body');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  endpoint.classList.toggle('open', !isOpen);
+}
+
+// Highlight active sidebar link on scroll
+const sections = document.querySelectorAll('.section, .hero');
+const links = document.querySelectorAll('aside a');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const id = entry.target.id;
+      const match = document.querySelector(`aside a[href="#${id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { threshold: 0.2 });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
